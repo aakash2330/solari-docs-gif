@@ -2,7 +2,7 @@
 import { gateway } from "@ai-sdk/gateway";
 import { experimental_evaluate } from "ai";
 
-const INTERACTIVE = /^(link|button|textbox|checkbox|combobox|menuitem|tab|option)$/;
+const INTERACTIVE = /^(link|button|textbox|checkbox|combobox|menuitem(radio|checkbox)?|tab|option)$/;
 
 export function choicesFromTree(tree: string): Record<string, string> {
   return Object.fromEntries(
@@ -12,15 +12,16 @@ export function choicesFromTree(tree: string): Record<string, string> {
   );
 }
 
-export async function nextClick(goal: string, tree: string) {
+// history: clicks so far, so the agent knows the steps are already done and answers "done" instead of looping.
+export async function nextClick(goal: string, tree: string, history: string[] = []) {
   const choices = choicesFromTree(tree);
   const { answers } = await experimental_evaluate({
     model: gateway.evaluationModel(process.env.JEV_MODEL!),
-    state: `Goal: ${goal}\n\nCurrent page (accessibility tree):\n${tree}`,
+    state: `Goal: ${goal}\n\nClicks made so far, in order: ${history.length ? history.join(" → ") : "none yet"}\n\nCurrent page (accessibility tree):\n${tree}`,
     questions: {
       next: {
         type: "choice",
-        instructions: "Which element should be clicked next to reach the goal? Answer done if the page already shows the goal reached.",
+        instructions: "Which element should be clicked next to reach the goal? Answer done if the page already shows the goal reached, or if the clicks made so far already completed the steps. Never repeat a sequence that has already been performed.",
         criteria: { done: "the goal is already reached, stop", ...choices },
       },
     },

@@ -23,7 +23,8 @@ export type Goal = z.infer<typeof Goals>["goals"][number] & {
 type Page = { source: string; title: string; sections: { heading: string; anchor: string; text: string }[] };
 
 const SYSTEM = `You plan screen recordings for a help page. Return one goal per section that documents a concrete UI task worth a GIF, and nothing for sections that are conceptual, reference, pricing or installation.
-A goal is the end state a viewer should reach, in one sentence, visible on screen ("a database named Tasks appears in the sidebar"). Never list clicks or name menus — the agent driving the browser works that out from the live page.`;
+A goal is the end state a viewer should reach, in one sentence, visible on screen ("a database named Tasks appears in the sidebar"). Never list clicks or name menus — the agent driving the browser works that out from the live page.
+The goal is the state right after the numbered steps. A closing sentence about reversing the change (reset, undo, bring it back) is not part of the goal.`;
 
 async function ask(prompt: string) {
   // No --max-turns: structured output arrives as a tool call, which spends a turn.

@@ -25,7 +25,11 @@ export async function openBrowser({ headless = true, cdpUrl = "" } = {}) {
       await p.close();
       return png;
     },
-    sections: () => page.evaluate(readSections),
+    // Client-rendered docs are an empty shell at domcontentloaded; poll until the walk finds content.
+    sections: async () => {
+      await page.waitForFunction(`(${readSections})().sections.length > 0`);
+      return page.evaluate(readSections);
+    },
     close: () => browser.close(),
   };
 }

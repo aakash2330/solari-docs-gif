@@ -1,6 +1,7 @@
 "use client"
 
 import { createColumnHelper } from "@tanstack/react-table"
+import { Star } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -10,6 +11,22 @@ import { type Task } from "../data/schema"
 import { DataTableColumnHeader } from "./data-table-column-header"
 import { type TasksTableFeatures } from "./data-table-features"
 import { DataTableRowActions } from "./data-table-row-actions"
+import { useTasks } from "../store"
+
+function FavoriteToggle({ task }: { task: Task }) {
+  const { update } = useTasks()
+  return (
+    <button
+      type="button"
+      aria-label={task.favorite ? "Unfavorite" : "Favorite"}
+      aria-pressed={task.favorite}
+      onClick={() => update(task.id, { favorite: !task.favorite })}
+      className="text-muted-foreground hover:text-foreground"
+    >
+      <Star className={task.favorite ? "size-4 fill-yellow-400 text-yellow-400" : "size-4"} />
+    </button>
+  )
+}
 
 // Use `accessor` for data columns and `display` for columns without one.
 const columnHelper = createColumnHelper<TasksTableFeatures, Task>()
@@ -38,6 +55,13 @@ export const columns = columnHelper.columns([
     ),
     enableSorting: false,
     enableHiding: false,
+  }),
+  columnHelper.accessor("favorite", {
+    header: () => <span className="sr-only">Favorite</span>,
+    cell: ({ row }) => <FavoriteToggle task={row.original} />,
+    enableSorting: false,
+    enableHiding: false,
+    filterFn: (row, id, value) => !value || !!row.getValue(id),
   }),
   columnHelper.accessor("id", {
     header: ({ column }) => (

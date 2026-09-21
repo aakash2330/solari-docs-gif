@@ -4,7 +4,7 @@ import { nextClick } from "./jev";
 import { plan, replan, type Goal } from "./planner";
 import { verify } from "./verifier";
 
-const DOC_URL = "http://localhost:3001/how-to/filtering-tasks";
+const DOC_URL = process.argv[2] ?? "http://localhost:3001/how-to/filtering-tasks";
 const HEADLESS = true;
 
 type Run = {
@@ -77,7 +77,8 @@ const steps: [string, (run: Run) => Promise<void>][] = [
   ],
 ];
 
-const out = (g: Goal) => `out/${g.url.split("#")[1] || "page"}`;
+// out/<page-slug>[-<anchor>], so runs over several pages do not overwrite each other.
+const out = (g: Goal) => `out/${g.url.replace(/^.*\//, "").replace("#", "-")}`;
 
 async function record(run: Run, g: Goal) {
   const b = run.browser!;
@@ -87,7 +88,7 @@ async function record(run: Run, g: Goal) {
   let i = 0;
   // ponytail: click-only loop, add type() when a goal needs text input
   for (; i < MAX_STEPS; i++) {
-    const { ref, label } = await nextClick(g.instruction || g.goal, await b.tree());
+    const { ref, label } = await nextClick(g.instruction || g.goal, await b.tree(), g.trace);
     console.error(`  ${g.title}: ${label}`);
     if (ref === "done") break;
     g.trace.push(label);
@@ -104,7 +105,9 @@ async function record(run: Run, g: Goal) {
 
 async function check(g: Goal) {
   // ponytail: last frame only; add more frames if bad GIFs slip through.
-  const { ok, reason } = await verify(g.goal, `${out(g)}.png`);
+  const png = `${out(g)}.png`;
+  const { ok, reason } = await verify(g.goal, png);
+  await Bun.file(png).delete();
   g.verified = ok;
   g.reason = reason;
   console.error(`  ${g.title}: ${ok ? "yes" : "no"} ${reason}`);

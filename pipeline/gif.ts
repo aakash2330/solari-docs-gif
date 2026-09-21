@@ -14,7 +14,7 @@ export const CURSOR = {
     `fill="#111" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></g></svg>`,
 };
 
-export function toGif(frames: Frame[], cursorPng?: Uint8Array, delayMs = 1000) {
+export function toGif(frames: Frame[], cursorPng?: Uint8Array, delayMs = 1700) {
   const cursor = cursorPng && PNG.sync.read(Buffer.from(cursorPng));
   const gif = GIFEncoder();
   frames.forEach(({ png, at }, i) => {
