@@ -2,7 +2,11 @@
 import { gateway } from "@ai-sdk/gateway";
 import { experimental_evaluate } from "ai";
 
-const INTERACTIVE = /^(link|button|textbox|checkbox|combobox|menuitem(radio|checkbox)?|tab|option)$/;
+const ROLES = ["link", "button", "textbox", "checkbox", "combobox", "menuitem", "menuitemradio", "menuitemcheckbox", "tab", "option"];
+const INTERACTIVE = new RegExp(`^(${ROLES.join("|")})$`);
+
+// What this agent can do, for whoever plans its goals. Update alongside the code in this file.
+export const CAPABILITIES = `The browser agent can only click elements of these kinds: ${ROLES.join(", ")}. It cannot type text, press keys, scroll, drag, or hover.`;
 
 export function choicesFromTree(tree: string): Record<string, string> {
   return Object.fromEntries(
