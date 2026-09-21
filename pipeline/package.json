@@ -5,7 +5,12 @@
   "dependencies": {
     "@ai-sdk/gateway": "^4.0.87",
     "ai": "^7.0.107",
+    "gifenc": "^1.0.3",
     "playwright": "^1.63.0",
+    "pngjs": "^7.0.0",
     "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/pngjs": "^6.0.5"
   }
 }

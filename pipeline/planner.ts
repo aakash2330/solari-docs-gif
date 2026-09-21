@@ -43,6 +43,7 @@ export async function plan(page: {
       title: g.title,
       goal: g.goal,
       url: anchor ? `${page.source.split("#")[0]}#${anchor}` : page.source,
+      gif: "",
     };
   });
 }
