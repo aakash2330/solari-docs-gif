@@ -5,7 +5,8 @@
   "workspaces": ["app", "docs", "pipeline"],
   "scripts": {
     "dev": "bun run --filter '*' dev",
-    "start": "bun pipeline/index.ts"
+    "start": "bun pipeline/index.ts",
+    "clean": "bun pipeline/remove-gifs.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",

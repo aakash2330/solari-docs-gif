@@ -13,5 +13,3 @@ filters above the table.
 
 Every row in the table now shows the Done status, and a **Reset** button appears at
 the end of the filter row. Select it to bring the other tasks back.
-
-![filtering-tasks](/img/how-to/filtering-tasks.gif)

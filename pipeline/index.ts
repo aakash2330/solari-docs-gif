@@ -1,55 +1,37 @@
+import { basename, dirname, relative } from "node:path";
 import { openBrowser } from "./browser";
 import { CURSOR, toGif, type Frame } from "./gif";
 import { nextClick } from "./jev";
-import { plan, replan, type Goal } from "./planner";
+import { plan, replan, type Goal, type Page } from "./planner";
 import { verify } from "./verifier";
 
-const DOC_URL = process.argv[2] ?? "http://localhost:3001/how-to/filtering-tasks";
+const DIR = process.argv[2] ?? "docs/docs/how-to";
+const DOCS = "docs/docs";
+const IMG = "docs/static/img";
 const HEADLESS = true;
-
-type Run = {
-  source: string;
-  browser?: Awaited<ReturnType<typeof openBrowser>>;
-  page?: { title: string; sections: { heading: string; anchor: string; text: string }[] };
-  goals?: Goal[];
-  cursor?: Uint8Array;
-};
-
 const MAX_STEPS = 10;
+
+type Browser = Awaited<ReturnType<typeof openBrowser>>;
+type Run = Page & { browser: Browser; cursor: Uint8Array; goals?: Goal[] };
 
 const steps: [string, (run: Run) => Promise<void>][] = [
   [
-    "open browser",
-    async (run) => {
-      run.browser = await openBrowser({ headless: HEADLESS });
-      await run.browser.navigate(run.source);
-    },
-  ],
-  [
-    "read page",
-    async (run) => {
-      run.page = await run.browser!.sections();
-      console.error(`  ${run.page.sections.length} sections`);
-    },
-  ],
-  [
     "plan goals",
     async (run) => {
-      run.goals = await plan({ source: run.source, ...run.page! });
-      console.error(`${run.goals.length} worth recording`);
+      run.goals = await plan(run);
+      console.error(`  ${run.goals.length} worth recording`);
     },
   ],
   [
     "record",
     async (run) => {
-      run.cursor = await run.browser!.rasterize(CURSOR.svg, CURSOR.w, CURSOR.h);
       for (const g of run.goals!) await record(run, g);
     },
   ],
   [
     "verify",
     async (run) => {
-      for (const g of run.goals!) await check(g);
+      for (const g of run.goals!) await check(run, g);
     },
   ],
   [
@@ -58,12 +40,28 @@ const steps: [string, (run: Run) => Promise<void>][] = [
       const failed = run.goals!.filter((g) => !g.verified);
       if (!failed.length) return;
       // ponytail: one batched retry; loop it if a second pass ever pays off.
-      await replan({ source: run.source, ...run.page! }, run.goals!);
+      await replan(run, run.goals!);
       for (const g of failed) {
         console.error(`  ${g.title}: ${g.instruction}`);
         await record(run, g);
-        await check(g);
+        await check(run, g);
       }
+    },
+  ],
+  [
+    "write docs",
+    async (run) => {
+      const lines = run.text.split("\n");
+      const rel = dirname(relative(DOCS, run.file));
+      // Bottom-up so earlier line numbers stay valid after each insert.
+      for (const g of run.goals!.filter((g) => g.verified).sort((a, b) => b.after_line - a.after_line)) {
+        const name = basename(g.gif);
+        const embed = `![${g.title}](/img/${rel}/${name})`;
+        if (lines.includes(embed)) continue;
+        await Bun.write(`${IMG}/${rel}/${name}`, Bun.file(g.gif));
+        lines.splice(g.after_line, 0, "", embed);
+      }
+      await Bun.write(run.file, lines.join("\n"));
     },
   ],
   [
@@ -77,11 +75,12 @@ const steps: [string, (run: Run) => Promise<void>][] = [
   ],
 ];
 
-// out/<page-slug>[-<anchor>], so runs over several pages do not overwrite each other.
-const out = (g: Goal) => `out/${g.url.replace(/^.*\//, "").replace("#", "-")}`;
+// out/<file-stem>[-<line>], so several goals in one file do not overwrite each other.
+const out = (run: Run, g: Goal) =>
+  `out/${basename(run.file, ".md")}${run.goals!.length > 1 ? `-${g.after_line}` : ""}`;
 
 async function record(run: Run, g: Goal) {
-  const b = run.browser!;
+  const b = run.browser;
   await b.navigate(process.env.APP_URL ?? "http://localhost:3000");
   const frames: Frame[] = [];
   g.trace = [];
@@ -98,14 +97,14 @@ async function record(run: Run, g: Goal) {
   }
   g.trace.push(i < MAX_STEPS ? "done" : "hit step cap");
   frames.push({ png: await b.screenshot() });
-  g.gif = `${out(g)}.gif`;
+  g.gif = `${out(run, g)}.gif`;
   await Bun.write(g.gif, toGif(frames, run.cursor));
-  await Bun.write(`${out(g)}.png`, frames.at(-1)!.png);
+  await Bun.write(`${out(run, g)}.png`, frames.at(-1)!.png);
 }
 
-async function check(g: Goal) {
+async function check(run: Run, g: Goal) {
   // ponytail: last frame only; add more frames if bad GIFs slip through.
-  const png = `${out(g)}.png`;
+  const png = `${out(run, g)}.png`;
   const { ok, reason } = await verify(g.goal, png);
   await Bun.file(png).delete();
   g.verified = ok;
@@ -113,22 +112,24 @@ async function check(g: Goal) {
   console.error(`  ${g.title}: ${ok ? "yes" : "no"} ${reason}`);
 }
 
-const run: Run = { source: DOC_URL };
+const files = (await Array.fromAsync(new Bun.Glob("*.md").scan(DIR))).sort().map((f) => `${DIR}/${f}`);
+const browser = await openBrowser({ headless: HEADLESS });
+const cursor = await browser.rasterize(CURSOR.svg, CURSOR.w, CURSOR.h);
+const results: { file: string; goals?: Goal[] }[] = [];
 try {
-  for (const [name, step] of steps) {
-    const t = Date.now();
-    console.error(`→ ${name}`);
-    await step(run);
-    console.error(`  done in ${((Date.now() - t) / 1000).toFixed(1)}s`);
+  for (const file of files) {
+    console.error(`\n# ${file}`);
+    const run: Run = { file, text: await Bun.file(file).text(), browser, cursor };
+    for (const [name, step] of steps) {
+      const t = Date.now();
+      console.error(`→ ${name}`);
+      await step(run);
+      console.error(`  done in ${((Date.now() - t) / 1000).toFixed(1)}s`);
+    }
+    results.push({ file, goals: run.goals });
   }
 } finally {
-  await run.browser?.close();
+  await browser.close();
 }
 
-console.log(
-  JSON.stringify(
-    { source: run.source, generated_at: new Date().toISOString(), goals: run.goals },
-    null,
-    2,
-  ),
-);
+console.log(JSON.stringify({ generated_at: new Date().toISOString(), results }, null, 2));

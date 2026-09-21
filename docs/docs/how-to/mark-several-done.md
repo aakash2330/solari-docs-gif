@@ -13,5 +13,3 @@ in one go.
 
 Both rows now show the status Done and their checkboxes are cleared. **Delete
 selected**, beside Mark done, removes ticked rows in the same way.
-
-![mark-several-done](/img/how-to/mark-several-done.gif)

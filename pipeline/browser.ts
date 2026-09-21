@@ -25,51 +25,9 @@ export async function openBrowser({ headless = true, cdpUrl = "" } = {}) {
       await p.close();
       return png;
     },
-    // Client-rendered docs are an empty shell at domcontentloaded; poll until the walk finds content.
-    sections: async () => {
-      await page.waitForFunction(`(${readSections})().sections.length > 0`);
-      return page.evaluate(readSections);
-    },
     close: () => browser.close(),
   };
 }
 
 const ref2loc = (page: Page, ref: string) =>
   page.locator(`aria-ref=${ref.replace(/^\[?ref=|\]$/g, "")}`);
-
-function readSections() {
-  const root = document.querySelector("main, article, [role=main]") ?? document.body;
-  const walk = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
-  const sections: { heading: string; level: number; anchor: string; text: string }[] = [];
-  let current = { heading: "", level: 0, anchor: "", text: "" };
-
-  for (let n = walk.nextNode(); n; n = walk.nextNode()) {
-    if (n.nodeType === Node.TEXT_NODE) {
-      const t = n.textContent?.trim();
-      if (t) current.text += (current.text ? " " : "") + t;
-      continue;
-    }
-    const el = n as HTMLElement;
-    if (/^(SCRIPT|STYLE|NOSCRIPT|SVG|NAV)$/.test(el.tagName)) {
-      walk.currentNode = el.lastChild ?? el;
-      continue;
-    }
-    const level = /^H([1-6])$/.exec(el.tagName)?.[1];
-    if (!level) continue;
-    if (current.heading || current.text) sections.push(current);
-    current = {
-      heading: el.innerText.replace(/[\u200b-\u200d\ufeff]/g, "").trim(),
-      level: +level,
-      // No closest("[id]") fallback: a wrapper id links to the top of the page.
-      anchor:
-        el.id ||
-        el.querySelector("[id]")?.id ||
-        el.querySelector("a[href^='#']")?.getAttribute("href")?.slice(1) ||
-        "",
-      text: "",
-    };
-    walk.currentNode = el.lastChild ?? el;
-  }
-  if (current.heading || current.text) sections.push(current);
-  return { title: document.title, sections };
-}

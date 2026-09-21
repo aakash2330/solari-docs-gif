@@ -13,5 +13,3 @@ the toolbar.
 The table shrinks to the starred rows only, and a **Reset** button appears at the end
 of the filter row. Select it to bring the other tasks back. The star can also be set
 from the row's **⋮** menu with **Favorite**.
-
-![favorite-tasks](/img/how-to/favorite-tasks.gif)
