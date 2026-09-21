@@ -1,7 +1,7 @@
 import { openBrowser } from "./browser";
 import { CURSOR, toGif, type Frame } from "./gif";
 import { nextClick } from "./jev";
-import { plan } from "./planner";
+import { plan, replan, type Goal } from "./planner";
 import { verify } from "./verifier";
 
 const DOC_URL = "http://localhost:3001/how-to/filtering-tasks";
@@ -11,8 +11,8 @@ type Run = {
   source: string;
   browser?: Awaited<ReturnType<typeof openBrowser>>;
   page?: { title: string; sections: { heading: string; anchor: string; text: string }[] };
-  goals?: Awaited<ReturnType<typeof plan>>;
-  ends: string[];
+  goals?: Goal[];
+  cursor?: Uint8Array;
 };
 
 const MAX_STEPS = 10;
@@ -40,49 +40,77 @@ const steps: [string, (run: Run) => Promise<void>][] = [
     },
   ],
   [
-    "record + verify",
+    "record",
     async (run) => {
-      const b = run.browser!;
-      const cursor = await b.rasterize(CURSOR.svg, CURSOR.w, CURSOR.h);
-      for (const g of run.goals!) {
-        const name = `out/${g.url.split("#")[1] || "page"}`;
-        g.gif = `${name}.gif`;
-        run.ends.push(`${name}.png`);
-        let goal = g.goal;
-        // ponytail: one retry; make it a loop with a cap if one isn't enough.
-        for (let attempt = 0; attempt < 2; attempt++) {
-          await record(b, cursor, goal, name);
-          const { ok, reason } = await verify(g.goal, `${name}.png`);
-          console.error(`  ${g.title}: ${ok ? "yes" : "no"} ${reason}`);
-          g.verified = ok;
-          if (ok) break;
-          goal = `${g.goal}\n\nA previous attempt ended on the wrong screen: ${reason}\nAvoid repeating that.`;
-        }
+      run.cursor = await run.browser!.rasterize(CURSOR.svg, CURSOR.w, CURSOR.h);
+      for (const g of run.goals!) await record(run, g);
+    },
+  ],
+  [
+    "verify",
+    async (run) => {
+      for (const g of run.goals!) await check(g);
+    },
+  ],
+  [
+    "retry failed",
+    async (run) => {
+      const failed = run.goals!.filter((g) => !g.verified);
+      if (!failed.length) return;
+      // ponytail: one batched retry; loop it if a second pass ever pays off.
+      await replan({ source: run.source, ...run.page! }, run.goals!);
+      for (const g of failed) {
+        console.error(`  ${g.title}: ${g.instruction}`);
+        await record(run, g);
+        await check(g);
       }
+    },
+  ],
+  [
+    "summary",
+    async (run) => {
+      const goals = run.goals!;
+      for (const g of goals)
+        console.error(`  ${g.verified ? "✓" : "✗"} ${g.title}${g.instruction ? " (retried)" : ""} → ${g.gif}`);
+      console.error(`  ${goals.filter((g) => g.verified).length}/${goals.length} verified`);
     },
   ],
 ];
 
-async function record(
-  b: NonNullable<Run["browser"]>, cursor: Uint8Array, goal: string, name: string,
-) {
+const out = (g: Goal) => `out/${g.url.split("#")[1] || "page"}`;
+
+async function record(run: Run, g: Goal) {
+  const b = run.browser!;
   await b.navigate(process.env.APP_URL ?? "http://localhost:3000");
   const frames: Frame[] = [];
+  g.trace = [];
+  let i = 0;
   // ponytail: click-only loop, add type() when a goal needs text input
-  for (let i = 0; i < MAX_STEPS; i++) {
-    const ref = await nextClick(goal, await b.tree());
-    console.error(`  ${name}: ${ref}`);
+  for (; i < MAX_STEPS; i++) {
+    const { ref, label } = await nextClick(g.instruction || g.goal, await b.tree());
+    console.error(`  ${g.title}: ${label}`);
     if (ref === "done") break;
+    g.trace.push(label);
     frames.push({ png: await b.screenshot(), at: await b.center(ref) });
     await b.click(ref);
     await b.page.waitForTimeout(400);
   }
+  g.trace.push(i < MAX_STEPS ? "done" : "hit step cap");
   frames.push({ png: await b.screenshot() });
-  await Bun.write(`${name}.gif`, toGif(frames, cursor));
-  await Bun.write(`${name}.png`, frames.at(-1)!.png);
+  g.gif = `${out(g)}.gif`;
+  await Bun.write(g.gif, toGif(frames, run.cursor));
+  await Bun.write(`${out(g)}.png`, frames.at(-1)!.png);
 }
 
-const run: Run = { source: DOC_URL, ends: [] };
+async function check(g: Goal) {
+  // ponytail: last frame only; add more frames if bad GIFs slip through.
+  const { ok, reason } = await verify(g.goal, `${out(g)}.png`);
+  g.verified = ok;
+  g.reason = reason;
+  console.error(`  ${g.title}: ${ok ? "yes" : "no"} ${reason}`);
+}
+
+const run: Run = { source: DOC_URL };
 try {
   for (const [name, step] of steps) {
     const t = Date.now();

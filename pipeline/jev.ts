@@ -13,6 +13,7 @@ export function choicesFromTree(tree: string): Record<string, string> {
 }
 
 export async function nextClick(goal: string, tree: string) {
+  const choices = choicesFromTree(tree);
   const { answers } = await experimental_evaluate({
     model: gateway.evaluationModel(process.env.JEV_MODEL!),
     state: `Goal: ${goal}\n\nCurrent page (accessibility tree):\n${tree}`,
@@ -20,11 +21,12 @@ export async function nextClick(goal: string, tree: string) {
       next: {
         type: "choice",
         instructions: "Which element should be clicked next to reach the goal? Answer done if the page already shows the goal reached.",
-        criteria: { done: "the goal is already reached, stop", ...choicesFromTree(tree) },
+        criteria: { done: "the goal is already reached, stop", ...choices },
       },
     },
   });
-  return (answers.next as { choice: string }).choice;
+  const ref = (answers.next as { choice: string }).choice;
+  return { ref, label: choices[ref] ?? ref };
 }
 
 if (import.meta.main) {
