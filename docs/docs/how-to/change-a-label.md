@@ -13,3 +13,5 @@ set from the task's own row, not from the toolbar.
 4. Select **Bug**.
 
 The badge next to the task's title changes from Documentation to Bug.
+
+![Change a task's label](/img/how-to/change-a-label/change-a-task-s-label.gif)

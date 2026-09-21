@@ -1,0 +1,227 @@
+
+# docs/docs/how-to/add-a-task.md
+→ plan goals
+  1 worth recording
+  done in 5.9s
+→ record
+  Add a task: button "Add Task"
+  Add a task: combobox "Status"
+  Add a task: option "In Progress"
+  Add a task: combobox "Priority"
+  Add a task: option "High"
+  Add a task: button "Create task"
+  Add a task: done
+  done in 9.8s
+→ verify
+  Add a task: yes — the top row is TASK-9001 "New task" with status In Progress and priority High.
+  done in 6.3s
+→ retry failed
+  done in 0.0s
+→ write docs
+  done in 0.0s
+→ summary
+  ✓ Add a task → out/2026-09-21T19-55/add-a-task/add-a-task.gif
+  1/1 verified
+  done in 0.0s
+
+# docs/docs/how-to/change-a-label.md
+→ plan goals
+  1 worth recording
+  done in 5.3s
+→ record
+  Change a task's label: done
+  done in 1.0s
+→ verify
+  Change a task's label: yes Label badges sit directly to the left of each task title, and two rows (TASK-7839, TASK-1280) show a badge reading "Bug".
+  done in 6.8s
+→ retry failed
+  done in 0.0s
+→ write docs
+  done in 0.0s
+→ summary
+  ✓ Change a task's label → out/2026-09-21T19-55/change-a-label/change-a-task-s-label.gif
+  1/1 verified
+  done in 0.0s
+
+# docs/docs/how-to/copy-a-task.md
+→ plan goals
+  1 worth recording
+  done in 5.4s
+→ record
+  Copy a task: button "Open menu"
+  Copy a task: menuitem "Make a copy"
+  Copy a task: done
+  done in 3.4s
+→ verify
+  Copy a task: yes TASK-9001 sits directly under TASK-8782 with the identical title, Documentation label, In Progress status and Medium priority — a duplicate row with a new ID.
+  done in 6.7s
+→ retry failed
+  done in 0.0s
+→ write docs
+  done in 0.0s
+→ summary
+  ✓ Copy a task → out/2026-09-21T19-55/copy-a-task/copy-a-task.gif
+  1/1 verified
+  done in 0.0s
+
+# docs/docs/how-to/delete-a-task.md
+→ plan goals
+  1 worth recording
+  done in 5.8s
+→ record
+  Delete a task: button "Open menu"
+  Delete a task: menuitem "Delete ⌘⌫"
+  Delete a task: button "Delete"
+  Delete a task: done
+  done in 4.8s
+→ verify
+  Delete a task: yes The banner "Deleted TASK-8782. Undo" sits above the filter/toolbar row, and no TASK-8782 row appears in the list.
+  done in 6.9s
+→ retry failed
+  done in 0.0s
+→ write docs
+  done in 0.0s
+→ summary
+  ✓ Delete a task → out/2026-09-21T19-55/delete-a-task/delete-a-task.gif
+  1/1 verified
+  done in 0.0s
+
+# docs/docs/how-to/edit-a-task.md
+→ plan goals
+  1 worth recording
+  done in 5.3s
+→ record
+  Edit a task: button "Open menu"
+  Edit a task: menuitem "Edit"
+  Edit a task: combobox "Status"
+  Edit a task: option "Done"
+  Edit a task: button "Save changes"
+  Edit a task: done
+  done in 7.0s
+→ verify
+  Edit a task: yes — no dialog is open, and the first row (TASK-8782) shows Status "Done".
+  done in 7.0s
+→ retry failed
+  done in 0.0s
+→ write docs
+  done in 0.0s
+→ summary
+  ✓ Edit a task → out/2026-09-21T19-55/edit-a-task/edit-a-task.gif
+  1/1 verified
+  done in 0.0s
+
+# docs/docs/how-to/favorite-tasks.md
+→ plan goals
+  1 worth recording
+  done in 5.2s
+→ record
+  Star a task and show only starred tasks: button "Favorites"
+  Star a task and show only starred tasks: done
+  done in 4.4s
+→ verify
+  Star a task and show only starred tasks: no The Reset button is there and the Favorites filter is active, but the table shows "No results." — no starred task row, so no filled yellow star either.
+  done in 6.6s
+→ retry failed
+  Star a task and show only starred tasks: First click the star button in the first table row (the one for TASK-8782, sitting just after that row's checkbox) and confirm it turns filled yellow. Only then click the button "Favorites" in the toolbar, to the right of Priority. Do not click Favorites before starring — with no starred task the table renders "No results." Do not click the Reset button, the row's ⋮ menu, or any other filter; stop as soon as the single starred row is showing with Reset visible at the end of the filter row.
+  Star a task and show only starred tasks: button "Favorite"
+  Star a task and show only starred tasks: done
+  Star a task and show only starred tasks: no All tasks are still listed (only the first one is starred yellow), and the filter row shows Status/Priority/Favorites with no Reset button — the starred-only filter isn't applied.
+  done in 15.3s
+→ write docs
+  done in 0.0s
+→ summary
+  ✗ Star a task and show only starred tasks (retried) → out/2026-09-21T19-55/favorite-tasks/star-a-task-and-show-only-starred-tasks.failed.gif
+  0/1 verified
+  done in 0.0s
+
+# docs/docs/how-to/filtering-tasks.md
+→ plan goals
+  1 worth recording
+  done in 5.5s
+→ record
+  Filter tasks by status: button "Status"
+  Filter tasks by status: option "Done 19"
+  Filter tasks by status: done
+  done in 10.8s
+→ verify
+  Filter tasks by status: yes Every visible row shows Status "Done", and a "Reset ✕" button sits in the filter row next to the Status filter (which displays the "Done" badge).
+  done in 6.4s
+→ retry failed
+  done in 0.0s
+→ write docs
+  done in 0.0s
+→ summary
+  ✓ Filter tasks by status → out/2026-09-21T19-55/filtering-tasks/filter-tasks-by-status.gif
+  1/1 verified
+  done in 0.0s
+
+# docs/docs/how-to/hiding-columns.md
+→ plan goals
+  1 worth recording
+  done in 5.7s
+→ record
+  Hide a column: button "Priority"
+  Hide a column: menuitem "Hide"
+  Hide a column: done
+  done in 6.1s
+→ verify
+  Hide a column: yes The table header shows only Task, Title, and Status — no Priority column (the "Priority" text visible is the filter button above the table, not a column).
+  done in 5.1s
+→ retry failed
+  done in 0.0s
+→ write docs
+  done in 0.0s
+→ summary
+  ✓ Hide a column → out/2026-09-21T19-55/hiding-columns/hide-a-column.gif
+  1/1 verified
+  done in 0.0s
+
+# docs/docs/how-to/mark-several-done.md
+→ plan goals
+  1 worth recording
+  done in 6.6s
+→ record
+  Mark several tasks done at once: checkbox "Select row"
+  Mark several tasks done at once: button "Mark done"
+  Mark several tasks done at once: done
+  done in 3.5s
+→ verify
+  Mark several tasks done at once: no All checkboxes are cleared and no toolbar is visible, but the frame gives no evidence of which two rows were ticked — several rows show Done scattered among Backlog/Todo/In Progress, so the "now both show Done" outcome isn't shown.
+  done in 7.2s
+→ retry failed
+  Mark several tasks done at once: Click the "Select row" checkbox on the first task row (TASK-8782), then click the "Select row" checkbox on the second task row (TASK-7878) — two separate checkbox clicks before anything else. Only after both are ticked and the bulk-action toolbar has appeared, click the "Mark done" button in that toolbar. Stop there. Do not click "Select all", the header checkbox, "Delete selected", any row's status cell, or any filter/column control, and do not click Mark done after ticking only one row.
+  Mark several tasks done at once: checkbox "Select row"
+  Mark several tasks done at once: checkbox "Select row"
+  Mark several tasks done at once: button "Mark done"
+  Mark several tasks done at once: done
+  Mark several tasks done at once: no **No.**
+
+The frame shows a plain task list with every checkbox already empty and no bulk-action toolbar — there's nothing marking which two rows were ticked or that their status just changed to Done (several unrelated rows are Done too). It's indistinguishable from the table's resting state.
+  done in 19.8s
+→ write docs
+  done in 0.0s
+→ summary
+  ✗ Mark several tasks done at once (retried) → out/2026-09-21T19-55/mark-several-done/mark-several-tasks-done-at-once.failed.gif
+  0/1 verified
+  done in 0.0s
+
+# docs/docs/how-to/sorting-tasks.md
+→ plan goals
+  1 worth recording
+  done in 5.3s
+→ record
+  Sort tasks by priority: button "Priority"
+  Sort tasks by priority: menuitem "Asc"
+  Sort tasks by priority: done
+  done in 3.9s
+→ verify
+  Sort tasks by priority: yes — the Priority header shows a single up arrow (↑) and every visible row is High priority, sitting at the top of the table.
+  done in 6.9s
+→ retry failed
+  done in 0.0s
+→ write docs
+  done in 0.0s
+→ summary
+  ✓ Sort tasks by priority → out/2026-09-21T19-55/sorting-tasks/sort-tasks-by-priority.gif
+  1/1 verified
+  done in 0.0s

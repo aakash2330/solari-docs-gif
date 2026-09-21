@@ -63,9 +63,6 @@ export function DataTableRowActions<TData extends RowData>({
         <DropdownMenuContent align="end" className="w-[160px]">
           <DropdownMenuItem onSelect={() => setEditing(true)}>Edit</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => duplicate(task.id)}>Make a copy</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => update(task.id, { favorite: !task.favorite })}>
-            {task.favorite ? "Unfavorite" : "Favorite"}
-          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>Labels</DropdownMenuSubTrigger>

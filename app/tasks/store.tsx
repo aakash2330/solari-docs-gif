@@ -5,7 +5,7 @@ import { type Task } from "./data/schema"
 type Store = {
   tasks: Task[]
   deleted: Task[]
-  add: (t: Omit<Task, "id" | "favorite">) => void
+  add: (t: Omit<Task, "id">) => void
   update: (id: string, patch: Partial<Task>) => void
   updateMany: (ids: string[], patch: Partial<Task>) => void
   remove: (ids: string[]) => void
@@ -28,7 +28,7 @@ export function TasksProvider({ initial, children }: { initial: Task[]; children
   const store: Store = {
     tasks,
     deleted,
-    add: (t) => setTasks((ts) => [{ ...t, id: newId(), favorite: false }, ...ts]),
+    add: (t) => setTasks((ts) => [{ ...t, id: newId() }, ...ts]),
     update: (id, patch) => updateMany([id], patch),
     updateMany,
     remove: (ids) => {
@@ -36,7 +36,7 @@ export function TasksProvider({ initial, children }: { initial: Task[]; children
       setTasks((ts) => ts.filter((t) => !ids.includes(t.id)))
     },
     duplicate: (id) =>
-      setTasks((ts) => ts.flatMap((t) => (t.id === id ? [t, { ...t, id: newId(), favorite: false }] : [t]))),
+      setTasks((ts) => ts.flatMap((t) => (t.id === id ? [t, { ...t, id: newId() }] : [t]))),
     // ponytail: undo puts rows back on top, not at their old index. Good enough for a demo.
     undo: () => {
       setTasks((ts) => [...deleted, ...ts])

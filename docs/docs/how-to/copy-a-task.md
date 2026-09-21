@@ -12,3 +12,5 @@ A copy keeps everything but the ID, and sits directly under the original.
 
 A second row with the same title, status and priority appears immediately below
 TASK-8782, carrying a new ID.
+
+![Copy a task](/img/how-to/copy-a-task/copy-a-task.gif)

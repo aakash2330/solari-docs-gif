@@ -9,7 +9,8 @@ filters above the table.
 
 1. Select **Status** in the toolbar, above the table on the left.
 2. In the list that opens, select **Done**.
-3. Press **Escape** to close the list.
 
 Every row in the table now shows the Done status, and a **Reset** button appears at
 the end of the filter row. Select it to bring the other tasks back.
+
+![Filter tasks by status](/img/how-to/filtering-tasks/filter-tasks-by-status.gif)

@@ -13,3 +13,5 @@ New tasks go in from the toolbar and land at the top of the list.
 
 A new row appears as the first row of the table, with a fresh ID, the status In
 Progress and the priority High. The title is **New task** unless you changed it.
+
+![Add a task](/img/how-to/add-a-task/add-a-task.gif)

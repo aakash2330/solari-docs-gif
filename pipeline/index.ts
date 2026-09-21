@@ -1,3 +1,4 @@
+import { renameSync } from "node:fs";
 import { basename, dirname, relative } from "node:path";
 import { openBrowser } from "./browser";
 import { CURSOR, toGif, type Frame } from "./gif";
@@ -9,6 +10,15 @@ const DIR = process.argv[2] ?? "docs/docs/how-to";
 const DOCS = "docs/docs";
 const IMG = "docs/static/img";
 const HEADLESS = true;
+// out/<run>/<page>/<section>.gif, kept forever as the record of every run.
+const RUN = `out/${new Date().toISOString().slice(0, 16).replace(/:/g, "-")}`;
+await Bun.write(`${RUN}/log.txt`, "");
+const logFile = Bun.file(`${RUN}/log.txt`).writer();
+function log(line: string) {
+  console.error(line);
+  logFile.write(line + "\n");
+  logFile.flush();
+}
 
 type Browser = Awaited<ReturnType<typeof openBrowser>>;
 type Run = Page & { browser: Browser; cursor: Uint8Array; goals?: Goal[] };
@@ -18,7 +28,7 @@ const steps: [string, (run: Run) => Promise<void>][] = [
     "plan goals",
     async (run) => {
       run.goals = await plan(run);
-      console.error(`  ${run.goals.length} worth recording`);
+      log(`  ${run.goals.length} worth recording`);
     },
   ],
   [
@@ -41,7 +51,7 @@ const steps: [string, (run: Run) => Promise<void>][] = [
       // ponytail: one batched retry; loop it if a second pass ever pays off.
       await replan(run, run.goals!);
       for (const g of failed) {
-        console.error(`  ${g.title}: ${g.instruction}`);
+        log(`  ${g.title}: ${g.instruction}`);
         await record(run, g);
         await check(run, g);
       }
@@ -54,10 +64,9 @@ const steps: [string, (run: Run) => Promise<void>][] = [
       const rel = dirname(relative(DOCS, run.file));
       // Bottom-up so earlier line numbers stay valid after each insert.
       for (const g of run.goals!.filter((g) => g.verified).sort((a, b) => b.after_line - a.after_line)) {
-        const name = basename(g.gif);
-        const embed = `![${g.title}](/img/${rel}/${name})`;
+        const embed = `![${g.title}](/img/${rel}/${key(run, g)})`;
         if (lines.includes(embed)) continue;
-        await Bun.write(`${IMG}/${rel}/${name}`, Bun.file(g.gif));
+        await Bun.write(`${IMG}/${rel}/${key(run, g)}`, Bun.file(g.gif));
         lines.splice(g.after_line, 0, "", embed);
       }
       await Bun.write(run.file, lines.join("\n"));
@@ -68,15 +77,16 @@ const steps: [string, (run: Run) => Promise<void>][] = [
     async (run) => {
       const goals = run.goals!;
       for (const g of goals)
-        console.error(`  ${g.verified ? "✓" : "✗"} ${g.title}${g.instruction ? " (retried)" : ""} → ${g.gif}`);
-      console.error(`  ${goals.filter((g) => g.verified).length}/${goals.length} verified`);
+        log(`  ${g.verified ? "✓" : "✗"} ${g.title}${g.instruction ? " (retried)" : ""} → ${g.gif}`);
+      log(`  ${goals.filter((g) => g.verified).length}/${goals.length} verified`);
     },
   ],
 ];
 
-// out/<file-stem>[-<line>], so several goals in one file do not overwrite each other.
-const out = (run: Run, g: Goal) =>
-  `out/${basename(run.file, ".md")}${run.goals!.length > 1 ? `-${g.after_line}` : ""}`;
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+// <page>/<section>.gif, the same relative path in out/<run>/ and in the docs image folder.
+const key = (run: Run, g: Goal) => `${basename(run.file, ".md")}/${slug(g.title)}.gif`;
+const out = (run: Run, g: Goal) => `${RUN}/${key(run, g)}`;
 
 async function record(run: Run, g: Goal) {
   const b = run.browser;
@@ -87,7 +97,7 @@ async function record(run: Run, g: Goal) {
   // ponytail: click-only loop, add type() when a goal needs text input
   for (; i < MAX_STEPS; i++) {
     const { ref, label } = await nextClick(g.instruction || g.goal, await b.tree(), g.trace);
-    console.error(`  ${g.title}: ${label}`);
+    log(`  ${g.title}: ${label}`);
     if (ref === "done") break;
     g.trace.push(label);
     frames.push({ png: await b.screenshot(), at: await b.center(ref) });
@@ -96,39 +106,38 @@ async function record(run: Run, g: Goal) {
   }
   g.trace.push(i < MAX_STEPS ? "done" : "hit step cap");
   frames.push({ png: await b.screenshot() });
-  g.gif = `${out(run, g)}.gif`;
+  g.gif = out(run, g);
   await Bun.write(g.gif, toGif(frames, run.cursor));
-  await Bun.write(`${out(run, g)}.png`, frames.at(-1)!.png);
+  await Bun.write(`${g.gif}.png`, frames.at(-1)!.png);
 }
 
 async function check(run: Run, g: Goal) {
   // ponytail: last frame only; add more frames if bad GIFs slip through.
-  const png = `${out(run, g)}.png`;
+  const png = `${g.gif}.png`;
   const { ok, reason } = await verify(g.goal, png);
   await Bun.file(png).delete();
   g.verified = ok;
   g.reason = reason;
-  console.error(`  ${g.title}: ${ok ? "yes" : "no"} ${reason}`);
+  log(`  ${g.title}: ${ok ? "yes" : "no"} ${reason}`);
+  // A failed attempt keeps its GIF under a .failed name; a retry writes a fresh one beside it.
+  if (!ok) renameSync(g.gif, (g.gif = g.gif.replace(/\.gif$/, ".failed.gif")));
 }
 
 const files = (await Array.fromAsync(new Bun.Glob("*.md").scan(DIR))).sort().map((f) => `${DIR}/${f}`);
 const browser = await openBrowser({ headless: HEADLESS });
 const cursor = await browser.rasterize(CURSOR.svg, CURSOR.w, CURSOR.h);
-const results: { file: string; goals?: Goal[] }[] = [];
 try {
   for (const file of files) {
-    console.error(`\n# ${file}`);
+    log(`\n# ${file}`);
     const run: Run = { file, text: await Bun.file(file).text(), browser, cursor };
     for (const [name, step] of steps) {
       const t = Date.now();
-      console.error(`→ ${name}`);
+      log(`→ ${name}`);
       await step(run);
-      console.error(`  done in ${((Date.now() - t) / 1000).toFixed(1)}s`);
+      log(`  done in ${((Date.now() - t) / 1000).toFixed(1)}s`);
     }
-    results.push({ file, goals: run.goals });
   }
 } finally {
   await browser.close();
+  logFile.end();
 }
-
-console.log(JSON.stringify({ generated_at: new Date().toISOString(), results }, null, 2));
