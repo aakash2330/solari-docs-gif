@@ -18,7 +18,7 @@ A goal is the end state a viewer should reach, in one sentence, visible on scree
 
 async function ask(prompt: string) {
   // No --max-turns: structured output arrives as a tool call, which spends a turn.
-  const out = await Bun.$`claude -p --output-format json --json-schema ${SCHEMA} < ${Buffer.from(prompt)}`
+  const out = await Bun.$`claude -p --model claude-opus-5 --effort medium --output-format json --json-schema ${SCHEMA} < ${Buffer.from(prompt)}`
     .quiet()
     .json();
   if (out.is_error) throw new Error(`claude cli: ${out.result}`);

@@ -3,7 +3,7 @@ import { openBrowser } from "./browser";
 import { plan } from "./planner";
 
 // The demo app's own docs page, once it exists.
-const DOC_URL = "https://support.google.com/chrome/answer/95464";
+const DOC_URL = "http://localhost:3001/how-to/filtering-tasks";
 const HEADLESS = true;
 
 type Run = {

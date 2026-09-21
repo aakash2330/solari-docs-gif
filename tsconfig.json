@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     // Environment setup & latest features
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "DOM"],
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
@@ -11,6 +11,8 @@
 
     // Bundler mode
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": { "@/*": ["app/*"] },
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
