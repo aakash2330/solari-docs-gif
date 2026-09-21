@@ -15,3 +15,6 @@ for await (const f of new Bun.Glob("**/*.gif").scan(IMG)) {
   await Bun.file(`${IMG}/${f}`).delete();
   console.error(`deleted ${IMG}/${f}`);
 }
+// Bun.write recreates out/ on the next run.
+await Bun.$`rm -rf out`;
+console.error("emptied out/");
