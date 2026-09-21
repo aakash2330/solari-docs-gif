@@ -4,9 +4,10 @@ import { experimental_evaluate } from "ai";
 
 const ROLES = ["link", "button", "textbox", "checkbox", "combobox", "menuitem", "menuitemradio", "menuitemcheckbox", "tab", "option"];
 const INTERACTIVE = new RegExp(`^(${ROLES.join("|")})$`);
+export const MAX_STEPS = 10;
 
 // What this agent can do, for whoever plans its goals. Update alongside the code in this file.
-export const CAPABILITIES = `The browser agent can only click elements of these kinds: ${ROLES.join(", ")}. It cannot type text, press keys, scroll, drag, or hover.`;
+export const CAPABILITIES = `The browser agent can only click elements of these kinds: ${ROLES.join(", ")}, and gets at most ${MAX_STEPS} clicks per goal. It cannot type text, press keys, scroll, drag, or hover.`;
 
 export function choicesFromTree(tree: string): Record<string, string> {
   return Object.fromEntries(

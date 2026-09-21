@@ -1,7 +1,7 @@
 import { basename, dirname, relative } from "node:path";
 import { openBrowser } from "./browser";
 import { CURSOR, toGif, type Frame } from "./gif";
-import { nextClick } from "./jev";
+import { MAX_STEPS, nextClick } from "./jev";
 import { plan, replan, type Goal, type Page } from "./planner";
 import { verify } from "./verifier";
 
@@ -9,7 +9,6 @@ const DIR = process.argv[2] ?? "docs/docs/how-to";
 const DOCS = "docs/docs";
 const IMG = "docs/static/img";
 const HEADLESS = true;
-const MAX_STEPS = 10;
 
 type Browser = Awaited<ReturnType<typeof openBrowser>>;
 type Run = Page & { browser: Browser; cursor: Uint8Array; goals?: Goal[] };
