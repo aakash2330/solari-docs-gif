@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "bun run --filter '*' dev",
     "start": "bun pipeline/index.ts",
-    "test": "bun test"
   },
   "devDependencies": {
     "@types/bun": "latest",

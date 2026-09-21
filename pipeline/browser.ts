@@ -1,4 +1,3 @@
-// Local Chromium for now; Solari is Playwright over CDP, so porting is a cdpUrl away.
 import { chromium, type Page } from "playwright";
 
 export async function openBrowser({ headless = true, cdpUrl = "" } = {}) {
@@ -12,8 +11,20 @@ export async function openBrowser({ headless = true, cdpUrl = "" } = {}) {
     // mode "ai" is what adds the [ref=eN] handles that ref2loc resolves.
     tree: () => page.locator("body").ariaSnapshot({ mode: "ai" }),
     click: (ref: string) => ref2loc(page, ref).click(),
+    center: async (ref: string) => {
+      const b = await ref2loc(page, ref).boundingBox();
+      return b && { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+    },
     type: (ref: string, text: string) => ref2loc(page, ref).fill(text),
     screenshot: () => page.screenshot(),
+    rasterize: async (svg: string, width: number, height: number) => {
+      const p = await page.context().newPage();
+      await p.setViewportSize({ width, height });
+      await p.setContent(`<body style="margin:0">${svg}</body>`);
+      const png = await p.screenshot({ omitBackground: true });
+      await p.close();
+      return png;
+    },
     sections: () => page.evaluate(readSections),
     close: () => browser.close(),
   };
@@ -36,7 +47,7 @@ function readSections() {
     }
     const el = n as HTMLElement;
     if (/^(SCRIPT|STYLE|NOSCRIPT|SVG|NAV)$/.test(el.tagName)) {
-      walk.currentNode = el.lastChild ?? el; // skip the subtree
+      walk.currentNode = el.lastChild ?? el;
       continue;
     }
     const level = /^H([1-6])$/.exec(el.tagName)?.[1];
@@ -53,7 +64,7 @@ function readSections() {
         "",
       text: "",
     };
-    walk.currentNode = el.lastChild ?? el; // heading text is not body text
+    walk.currentNode = el.lastChild ?? el;
   }
   if (current.heading || current.text) sections.push(current);
   return { title: document.title, sections };

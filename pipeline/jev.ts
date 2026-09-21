@@ -1,11 +1,9 @@
-// Simple demo call to TypeSafe AI's Jev evaluation model via the Vercel AI Gateway.
 // Requires AI_GATEWAY_API_KEY in .env (Bun loads it automatically).
 import { gateway } from "@ai-sdk/gateway";
 import { experimental_evaluate } from "ai";
 
 const INTERACTIVE = /^(link|button|textbox|checkbox|combobox|menuitem|tab|option)$/;
 
-/** Interactive nodes of the tree, ref → label, as Jev's choice criteria. */
 export function choicesFromTree(tree: string): Record<string, string> {
   return Object.fromEntries(
     [...tree.matchAll(/^\s*- (\w+) "([^"]*)".*\[ref=(\w+)\]/gm)]
@@ -14,10 +12,9 @@ export function choicesFromTree(tree: string): Record<string, string> {
   );
 }
 
-/** Which element to click next toward the goal, or "done" once the tree shows it reached. */
 export async function nextClick(goal: string, tree: string) {
   const { answers } = await experimental_evaluate({
-    model: gateway.evaluationModel("typesafe-ai/jev"),
+    model: gateway.evaluationModel(process.env.JEV_MODEL!),
     state: `Goal: ${goal}\n\nCurrent page (accessibility tree):\n${tree}`,
     questions: {
       next: {
@@ -32,7 +29,7 @@ export async function nextClick(goal: string, tree: string) {
 
 if (import.meta.main) {
   const result = await experimental_evaluate({
-    model: gateway.evaluationModel("typesafe-ai/jev"),
+    model: gateway.evaluationModel(process.env.JEV_MODEL!),
     state: "The GIF renders correctly but the accessibility tree ref is stale after navigation.",
     questions: {
       isBug: {
