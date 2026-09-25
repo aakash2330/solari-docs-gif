@@ -11,5 +11,3 @@ Any column whose name carries a pair of small arrows can be sorted.
 
 The arrows beside Priority become a single upward arrow, and every task marked High
 moves to the top of the list. Choose **Desc** in the same menu to reverse it.
-
-![Sort tasks by priority](/img/how-to/sorting-tasks/sort-tasks-by-priority.gif)

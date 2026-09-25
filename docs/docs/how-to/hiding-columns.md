@@ -12,5 +12,3 @@ out of view without changing the underlying tasks.
 
 The Priority column is removed from the table. Open **View** again and set the same
 checkbox to bring it back.
-
-![Hide a column](/img/how-to/hiding-columns/hide-a-column.gif)

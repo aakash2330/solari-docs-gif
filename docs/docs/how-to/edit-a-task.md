@@ -15,5 +15,3 @@ the task's own row.
 
 The row's status now reads Done. The dialog closes and nothing else in the list
 moves.
-
-![Edit a task](/img/how-to/edit-a-task/edit-a-task.gif)

@@ -14,5 +14,3 @@ Deleting asks for confirmation first, and can be reversed straight afterwards.
 The row disappears and a message reading **Deleted TASK-8782** appears above the
 toolbar with an **Undo** link. Select **Undo** to put the task back at the top of
 the list.
-
-![Delete a task](/img/how-to/delete-a-task/delete-a-task.gif)
