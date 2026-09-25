@@ -1,3 +1,4 @@
+import { BookOpen } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -33,8 +34,11 @@ function Tasks() {
           </p>
         </div>
         {/* The docs navbar links back to :3000; keep the two in step. */}
-        <Button variant="outline" size="sm" asChild>
-          <a href="http://localhost:3001">Docs</a>
+        <Button asChild>
+          <a href="http://localhost:3001">
+            <BookOpen />
+            Go to docs
+          </a>
         </Button>
       </div>
       {deleted.length > 0 && (

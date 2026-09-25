@@ -1,6 +1,3 @@
-// Puts the tree back to the state before any run: no GIF embeds in the docs, no GIF
-// files, no run folders under out/, and the toolbar tweaks back at their defaults.
-// Each step undoes exactly one thing the pipeline or the Tweak panel writes.
 const DOCS = "docs/docs";
 const IMG = "docs/static/img";
 
@@ -17,6 +14,7 @@ for await (const f of new Bun.Glob("**/*.gif").scan(IMG)) {
   await Bun.file(`${IMG}/${f}`).delete();
   console.error(`deleted ${IMG}/${f}`);
 }
+await Bun.$`find ${IMG} -type d -empty -delete`.nothrow();
 await Bun.$`rm -rf out`;
 console.error("emptied out/");
 await Bun.write("app/tweaks.json", '{"search":"left","status":"left","priority":"left"}\n');
