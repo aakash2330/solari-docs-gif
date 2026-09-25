@@ -57,6 +57,8 @@ export function DataTable<TData extends RowData>({
       },
     },
     enableRowSelection: true,
+    // Every edit replaces `data`; without this, editing a row on page 3 jumps to page 1.
+    autoResetPageIndex: false,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,

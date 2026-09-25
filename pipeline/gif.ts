@@ -33,7 +33,7 @@ export function toGif(frames: Frame[], cursorPng?: Uint8Array, delayMs = 1700) {
   return gif.bytes();
 }
 
-// ponytail: assumes deviceScaleFactor 1; multiply x,y by the DPR if a context sets one.
+// assumes deviceScaleFactor 1; multiply x,y by the DPR if a context sets one.
 
 export function spotlight(
   data: Uint8Array, width: number, height: number, cx: number, cy: number,

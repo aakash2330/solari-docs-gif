@@ -3,6 +3,8 @@ node_modules
 
 # output
 dist
+# every pipeline run, kept locally as the record; never committed
+out/
 *.tgz
 
 # code coverage

@@ -1,6 +1,13 @@
-// Requires AI_GATEWAY_API_KEY in .env (Bun loads it automatically).
-import { gateway } from "@ai-sdk/gateway";
-import { experimental_evaluate } from "ai";
+// Requires TYPESAFE_API_KEY and JEV_MODEL in .env (Bun loads it automatically).
+async function evaluate(state: string, questions: Record<string, unknown>) {
+  const res = await fetch("https://api.typesafe.ai/v1/systemone", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${process.env.TYPESAFE_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: process.env.JEV_MODEL, state, questions }),
+  });
+  if (!res.ok) throw new Error(`TypeSafe ${res.status}: ${await res.text()}`);
+  return (await res.json()) as { answers: Record<string, any> };
+}
 
 const ROLES = ["link", "button", "textbox", "checkbox", "combobox", "menuitem", "menuitemradio", "menuitemcheckbox", "tab", "option"];
 const INTERACTIVE = new RegExp(`^(${ROLES.join("|")})$`);
@@ -20,28 +27,26 @@ export function choicesFromTree(tree: string): Record<string, string> {
 // history: clicks so far, so the agent knows the steps are already done and answers "done" instead of looping.
 export async function nextClick(goal: string, tree: string, history: string[] = []) {
   const choices = choicesFromTree(tree);
-  const { answers } = await experimental_evaluate({
-    model: gateway.evaluationModel(process.env.JEV_MODEL!),
-    state: `Goal: ${goal}\n\nClicks made so far, in order: ${history.length ? history.join(" → ") : "none yet"}\n\nCurrent page (accessibility tree):\n${tree}`,
-    questions: {
+  const { answers } = await evaluate(
+    `Goal: ${goal}\n\nClicks made so far, in order: ${history.length ? history.join(" → ") : "none yet"}\n\nCurrent page (accessibility tree):\n${tree}`,
+    {
       next: {
         type: "choice",
         instructions: "Which element should be clicked next to reach the goal? Answer done if the page already shows the goal reached, or if the clicks made so far already completed the steps. Never repeat a sequence that has already been performed.",
         criteria: { done: "the goal is already reached, stop", ...choices },
       },
     },
-  });
-  const ref = (answers.next as { choice: string }).choice;
+  );
+  const ref: string = answers.next.choice;
   return { ref, label: choices[ref] ?? ref };
 }
 
 if (import.meta.main) {
-  const result = await experimental_evaluate({
-    model: gateway.evaluationModel(process.env.JEV_MODEL!),
-    state: "The GIF renders correctly but the accessibility tree ref is stale after navigation.",
-    questions: {
+  const result = await evaluate(
+    "The GIF renders correctly but the accessibility tree ref is stale after navigation.",
+    {
       isBug: {
-        type: "boolean",
+        type: "noul",
         instructions: "Does this describe a real bug that needs fixing?",
       },
       severity: {
@@ -54,7 +59,7 @@ if (import.meta.main) {
         },
       },
     },
-  });
+  );
 
   console.log(JSON.stringify(result.answers, null, 2));
 }

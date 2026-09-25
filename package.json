@@ -5,7 +5,9 @@
   "workspaces": ["app", "docs", "pipeline"],
   "scripts": {
     "dev": "bun run --filter '*' dev",
-    "start": "bun pipeline/index.ts",
+    "start": "bun run docs-generate",
+    "docs-generate": "bun pipeline/generate.ts",
+    "docs-update": "bun pipeline/update.ts",
     "clean": "bun pipeline/remove-gifs.ts"
   },
   "devDependencies": {

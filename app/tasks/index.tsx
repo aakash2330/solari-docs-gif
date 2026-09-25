@@ -7,10 +7,9 @@ import { DataTable } from "./components/data-table";
 import { taskSchema } from "./data/schema";
 import tasksJson from "./data/tasks.json";
 import { TasksProvider, useTasks } from "./store";
+import { TweaksPanel } from "../tweaks";
 
-// Upstream reads this off disk in a Next server component; Bun bundles the JSON
-// in directly. The parse stays so bad seed data fails loudly rather than rendering
-// half a table.
+// Bad seed data throws here instead of rendering half a table.
 const tasks = z.array(taskSchema).parse(tasksJson);
 
 export function TasksPage() {
@@ -21,17 +20,22 @@ export function TasksPage() {
   );
 }
 
-// Upstream hides the table below md: and shows a screenshot instead. Dropped —
-// the recorder drives a fixed viewport and must always get the real table.
+// The recorder must always see the table, so don't hide it on small screens.
 function Tasks() {
   const { tasks, deleted, undo } = useTasks();
   return (
     <div className="flex h-full flex-1 flex-col gap-8 p-8">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-semibold tracking-tight">Welcome back!</h2>
-        <p className="text-muted-foreground">
-          Here&apos;s a list of your tasks for this month.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-semibold tracking-tight">Welcome back!</h2>
+          <p className="text-muted-foreground">
+            Here&apos;s a list of your tasks for this month.
+          </p>
+        </div>
+        {/* The docs navbar links back to :3000; keep the two in step. */}
+        <Button variant="outline" size="sm" asChild>
+          <a href="http://localhost:3001">Docs</a>
+        </Button>
       </div>
       {deleted.length > 0 && (
         <div role="status" className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
@@ -42,6 +46,7 @@ function Tasks() {
         </div>
       )}
       <DataTable data={tasks} columns={columns} />
+      <TweaksPanel />
     </div>
   );
 }

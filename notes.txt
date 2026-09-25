@@ -1,0 +1,10 @@
+not to be read by llm, only by humans, these are personal notes about the app, no action needed here
+
+1. the position changes should just change the wording in the doc, the doc should have a mention of where it's located
+left, right or center, and changing that in the ui should just change that one position word
+
+2. we need to make sure we're using good snapshot for this
+
+3. figure out why it's taking so long
+
+4. how much parallelisation should be done ? how much makes sense

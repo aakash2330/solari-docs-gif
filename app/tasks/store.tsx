@@ -37,7 +37,6 @@ export function TasksProvider({ initial, children }: { initial: Task[]; children
     },
     duplicate: (id) =>
       setTasks((ts) => ts.flatMap((t) => (t.id === id ? [t, { ...t, id: newId() }] : [t]))),
-    // ponytail: undo puts rows back on top, not at their old index. Good enough for a demo.
     undo: () => {
       setTasks((ts) => [...deleted, ...ts])
       setDeleted([])

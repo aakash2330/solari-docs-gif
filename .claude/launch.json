@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "app",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "--cwd", "app", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "docs",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "--cwd", "docs", "dev"],
+      "port": 3001
+    }
+  ]
+}

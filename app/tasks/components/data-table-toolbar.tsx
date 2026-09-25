@@ -11,6 +11,8 @@ import { DataTableViewOptions } from "./data-table-view-options"
 import { priorities, statuses } from "../data/data"
 import { type Task } from "../data/schema"
 import { useTasks } from "../store"
+import { useOpenTweak, useTweaks } from "../../tweaks"
+import type { Tweaks } from "../../../pipeline/serve"
 import { DataTableFacetedFilter } from "./data-table-faceted-filter"
 import { type TasksTableFeatures } from "./data-table-features"
 import { TaskDialog } from "./task-dialog"
@@ -23,6 +25,8 @@ export function DataTableToolbar<TData extends RowData>({
   table,
 }: DataTableToolbarProps<TData>) {
   const { remove } = useTasks()
+  const tweaks = useTweaks()
+  const open = useOpenTweak()
   const [adding, setAdding] = React.useState(false)
   const isFiltered = table.state.columnFilters.length > 0
   const selected = table.getFilteredSelectedRowModel().rows.map((r) => (r.original as Task).id)
@@ -31,31 +35,41 @@ export function DataTableToolbar<TData extends RowData>({
     table.resetRowSelection()
   }
 
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex flex-1 items-center gap-2">
+  // The search box and each filter chip render in the slot the Tweak panel put
+  // them in, ringed in blue while their row of the panel is open.
+  const slot = (id: keyof Tweaks, el: React.ReactNode) => (
+    <span
+      key={id}
+      data-tweak={id}
+      style={{ viewTransitionName: id }}
+      className={`inline-flex rounded-md ${open === id ? "tweak-ring" : ""}`}
+    >
+      {el}
+    </span>
+  )
+  const at = (pos: Tweaks["search"]) => [
+    tweaks.search === pos &&
+      slot(
+        "search",
         <Input
           placeholder="Filter tasks..."
           value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
+          onChange={(event) => table.getColumn("title")?.setFilterValue(event.target.value)}
           className="h-8 w-[150px] lg:w-[250px]"
-        />
-        {table.getColumn("status") && (
-          <DataTableFacetedFilter
-            column={table.getColumn("status")}
-            title="Status"
-            options={statuses}
-          />
-        )}
-        {table.getColumn("priority") && (
-          <DataTableFacetedFilter
-            column={table.getColumn("priority")}
-            title="Priority"
-            options={priorities}
-          />
-        )}
+        />,
+      ),
+    tweaks.status === pos &&
+      table.getColumn("status") &&
+      slot("status", <DataTableFacetedFilter column={table.getColumn("status")} title="Status" options={statuses} />),
+    tweaks.priority === pos &&
+      table.getColumn("priority") &&
+      slot("priority", <DataTableFacetedFilter column={table.getColumn("priority")} title="Priority" options={priorities} />),
+  ]
+
+  return (
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+      <div className="flex items-center gap-2">
+        {at("left")}
         {isFiltered && (
           <Button
             variant="ghost"
@@ -73,7 +87,9 @@ export function DataTableToolbar<TData extends RowData>({
           </Button>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2">{at("middle")}</div>
+      <div className="flex items-center justify-end gap-2">
+        {at("right")}
         <DataTableViewOptions table={table} />
         <Button size="sm" onClick={() => setAdding(true)}>
           Add Task

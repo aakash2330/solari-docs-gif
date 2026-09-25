@@ -3,8 +3,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Generated from https://ui.shadcn.com/r/colors/neutral.json (cssVarsV4).
-   The shadcn npm package ships animations only, not these colours. */
+/* The toolbar chip whose row of the Tweak panel is open: a blue ring that breathes. */
+@keyframes tweak-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--color-blue-500), 0 0 0 3px transparent; }
+  50% { box-shadow: 0 0 0 3px var(--color-blue-500), 0 0 18px 8px color-mix(in oklab, var(--color-blue-500) 55%, transparent); }
+}
+.tweak-ring { animation: tweak-pulse 1.4s ease-in-out infinite; }
+/* The chip's slide between toolbar slots (see setTweaks). */
+::view-transition-group(search),
+::view-transition-group(status),
+::view-transition-group(priority) { animation-duration: 450ms; animation-timing-function: cubic-bezier(0.2, 0, 0, 1); }
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
