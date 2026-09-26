@@ -67,7 +67,10 @@ const steps: [string, (run: Run) => Promise<void>][] = [
         // A re-run overwrites the GIF in place; the embed only goes in once.
         await Bun.write(`${IMG}/${rel}/${key(run, g)}`, Bun.file(g.gif));
         if (lines.includes(embed)) continue;
-        lines.splice(g.after_line, 0, "", embed);
+        // The planner sometimes points mid-paragraph; walk down to the paragraph's last line so the GIF never splits a sentence.
+        let at = g.after_line;
+        while (lines[at - 1]?.trim() && lines[at]?.trim()) at++;
+        lines.splice(at, 0, "", embed);
       }
       await Bun.write(run.file, lines.join("\n"));
     },

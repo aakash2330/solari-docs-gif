@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CAPABILITIES } from "./jev";
+import { answer } from "./model";
 
 const Goals = z.object({
   goals: z.array(
@@ -11,9 +12,6 @@ const Goals = z.object({
     }),
   ),
 });
-// The CLI's ajv rejects zod's $schema ref.
-const { $schema, ...jsonSchema } = z.toJSONSchema(Goals);
-const SCHEMA = JSON.stringify(jsonSchema);
 
 export type Goal = z.infer<typeof Goals>["goals"][number] & {
   gif: string;
@@ -29,14 +27,7 @@ The goal is the state right after the numbered steps. A closing sentence about r
 ${CAPABILITIES} Skip sections whose steps need anything else, and never make a goal hinge on a specific example ID or name from the text.
 Lines are numbered "N: text". after_line is the number of the last line of the paragraph describing the result of the steps, so the GIF lands right below it.`;
 
-async function ask(prompt: string) {
-  // No --max-turns: structured output arrives as a tool call, which spends a turn.
-  const out = await Bun.$`claude -p --model ${process.env.CLAUDE_MODEL!} --effort medium --output-format json --json-schema ${SCHEMA} < ${Buffer.from(prompt)}`
-    .quiet()
-    .json();
-  if (out.is_error) throw new Error(`claude cli: ${out.result}`);
-  return Goals.parse(JSON.parse(out.result)).goals;
-}
+const ask = async (prompt: string) => (await answer(Goals, prompt)).goals;
 
 const numbered = (page: Page) =>
   page.text

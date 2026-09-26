@@ -113,3 +113,7 @@ For more information, read the Bun API docs in `node_modules/bun-types/docs/**.m
 ## Skills
 
 Always use the `ponytail` skill for any coding work in this project.
+
+## Verification
+
+Don't do any live verification (running the pipeline, the app, a browser, or any model or API call) unless explicitly told to. Typecheck only; the user tests it themselves.

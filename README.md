@@ -27,7 +27,7 @@ Each one exists to produce a different manifest status:
 | Page | Expected status | Why |
 | --- | --- | --- |
 | `filtering-tasks.md` | `verified` | The filter works; the GIF should be written back |
-| `change-a-label.md` | `verified` | The Labels submenu changes the task's label; the GIF should be written back |
+| `delete-a-task.md` | `verified` | The row menu deletes the task and shows an Undo message; the GIF should be written back |
 | `how-the-list-works.md` | `skipped` | Conceptual, no steps to record |
 
 A help page describing a feature that silently does nothing is the exact failure
