@@ -1,7 +1,6 @@
 import { Solari } from "@solarisdk/browser";
 import { chromium, type Page } from "playwright";
 
-// Recording runs in Solari's cloud browser. headers carry the sandbox's preview token on every request to the app.
 export async function openBrowser(headers: Record<string, string>) {
   const solari = new Solari({ apiKey: process.env.SOLARI_API_KEY! });
   const session = await solari.sessions.create();
@@ -31,7 +30,10 @@ export async function openBrowser(headers: Record<string, string>) {
       await p.close();
       return png;
     },
-    close: () => browser.close().finally(release),
+    close: async () => {
+      await browser.close();
+      await release();
+    },
   };
 }
 
