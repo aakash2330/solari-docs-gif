@@ -116,14 +116,16 @@ async function record(run: Run, g: Goal) {
   frames.push({ png: await b.screenshot() });
   g.gif = out(run, g);
   await put(g.gif, toGif(frames, run.cursor));
+  await put(`${g.gif}.before.png`, frames[0]!.png);
   await put(`${g.gif}.png`, frames.at(-1)!.png);
 }
 
 async function check(run: Run, g: Goal) {
-  // last frame only; add more frames if bad GIFs slip through.
-  const png = `${g.gif}.png`;
-  const { ok, reason } = await verify(g.goal, png);
-  await rm(png);
+  // first and last frame, so "a row appears" is judged against where it started.
+  const before = `${g.gif}.before.png`, after = `${g.gif}.png`;
+  const { ok, reason } = await verify(g.goal, before, after);
+  await rm(before);
+  await rm(after);
   g.verified = ok;
   g.reason = reason;
   log(`  ${g.title}: ${ok ? "yes" : "no"} ${reason}`);

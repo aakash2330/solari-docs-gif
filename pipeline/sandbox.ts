@@ -40,6 +40,7 @@ async function latestSnapshot() {
 export async function startApp() {
   const sbx = (live = await client.create({ template: "base", fromSnapshot: await latestSnapshot(), lifecycle: { onTimeout: "kill" } }));
   try {
+    await sbx.connect(); // files.* go over the control socket, which create() leaves closed
     await sbx.files.write(`${DIR}/app/tweaks.json`, await readFile(`${ROOT}/app/tweaks.json`, "utf8"));
     return { ...(await waitForApp(sbx)), kill: () => sbx.kill() };
   } catch (e) {
