@@ -9,9 +9,8 @@ import { z } from "zod";
 
 const Pos = z.enum(["left", "middle", "right"]);
 const Tweaks = z.object({
-  search: Pos,
   status: Pos,
-  priority: Pos,
+  add: Pos,
 });
 export type Tweaks = z.infer<typeof Tweaks>;
 const ROOT = resolve(import.meta.dirname, ".."); // no "..", which sendFile refuses
@@ -19,8 +18,8 @@ const APP = ROOT + "/app";
 const FILE = APP + "/tweaks.json";
 const DOCS = ROOT + "/docs/docs/how-to";
 
-const NAMES: Record<keyof Tweaks, string> = { search: "search box", status: "\\*\\*Status\\*\\*", priority: "\\*\\*Priority\\*\\*" };
-const PHRASE: Record<Tweaks["search"], string> = { left: "on the left", middle: "in the middle", right: "on the right" };
+const NAMES: Record<keyof Tweaks, string> = { status: "\\*\\*Status\\*\\*", add: "\\*\\*Add Task\\*\\*" };
+const PHRASE: Record<Tweaks["status"], string> = { left: "on the left", middle: "in the middle", right: "on the right" };
 async function syncDocs(t: Tweaks) {
   for (const f of (await readdir(DOCS)).filter((f) => f.endsWith(".md"))) {
     const path = `${DOCS}/${f}`;

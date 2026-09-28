@@ -22,6 +22,7 @@ for (const sig of ["SIGINT", "SIGTERM"] as const)
   });
 let id: string;
 try {
+  await sbx.connect(); // files.* go over the control socket, which create() leaves closed
   const node = `node-${process.version}-linux-x64`;
   await sh(sbx, `curl -fsSL https://nodejs.org/dist/${process.version}/${node}.tar.gz | tar -xz -C /usr/local --strip-components=1`);
   await upload(sbx);

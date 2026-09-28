@@ -32,6 +32,8 @@ export const useDirty = () => useSyncExternalStore(subscribe, () => tweaks !== s
 
 // The pipeline's step names ("→ record"), mapped to what the person is waiting on.
 const STAGES: [RegExp, string][] = [
+  [/^update: /, "Starting a sandbox"],
+  [/^app on /, "Opening the browser"],
   [/^→ plan goals/, "Reading the docs"],
   [/^→ record/, "Recording new GIFs"],
   [/^→ verify/, "Checking the GIFs"],
@@ -42,12 +44,14 @@ type Status = { kind: "idle" | "busy" | "done" | "error"; text: string };
 // One POST saves the tweaks and runs the update pipeline; reports each stage as it starts.
 // The server ends the stream with "exit <code>", which tells a finished run from a crash.
 async function updateDocs(report: (s: Status) => void) {
+  report({ kind: "busy", text: "Saving the layout" });
   const res = await fetch("/api/tweaks", { method: "POST", body: JSON.stringify(tweaks) });
   if (!res.ok) return report({ kind: "error", text: await res.text() });
   saved = tweaks;
   notify();
   let page = "";
   let error = "";
+  let none = false; // the pipeline found no changed doc, so nothing was recorded
   let rest = ""; // a chunk can end mid-line
   const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
   for (let r = await reader.read(); !r.done; r = await reader.read()) {
@@ -56,10 +60,11 @@ async function updateDocs(report: (s: Status) => void) {
     for (const line of lines) {
       if (line.startsWith("# ")) page = line.slice(2).split("/").pop()!.replace(".md", "");
       const stage = STAGES.find(([re]) => re.test(line))?.[1];
-      if (stage) report({ kind: "busy", text: `${stage}: ${page}` });
+      if (stage) report({ kind: "busy", text: page ? `${stage}: ${page}` : stage });
       // The first "SomeError: ..." line of a crash, trimmed to its message when it carries one.
       if (!error && /^\s*(error:|\w*Error\b)/.test(line)) error = line.match(/"message":"([^"]+)"/)?.[1] ?? line.trim();
-      if (line === "exit 0") report({ kind: "done", text: "" });
+      if (line.startsWith("nothing changed")) none = true;
+      if (line === "exit 0") report(none ? { kind: "idle", text: "No doc describes that spot, so nothing was re-recorded" } : { kind: "done", text: page });
       else if (line.startsWith("exit ")) report({ kind: "error", text: error || `pipeline exited with ${line.slice(5)}` });
     }
   }
@@ -71,7 +76,7 @@ export function setOpenTweak(key: keyof Tweaks | null) {
   document.querySelector(`[data-tweak="${key}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
-type Pos = Tweaks["search"];
+type Pos = Tweaks["status"];
 const POS: Pos[] = ["left", "middle", "right"];
 
 // Three little slots, the chosen one filled: the toolbar in miniature.
@@ -84,9 +89,8 @@ const Slots = ({ pos }: { pos: Pos }) => (
 );
 
 const ROWS: { key: keyof Tweaks; title: string }[] = [
-  { key: "search", title: "Search box" },
   { key: "status", title: "Status filter" },
-  { key: "priority", title: "Priority filter" },
+  { key: "add", title: "Add Task button" },
 ];
 
 export function TweaksPanel() {
@@ -153,7 +157,7 @@ export function TweaksPanel() {
               {status.text}
             </span>
           ) : status.kind === "done" ? (
-            <a className="text-blue-600 underline underline-offset-4" href="http://localhost:3001/how-to/filtering-tasks" target="_blank">
+            <a className="text-blue-600 underline underline-offset-4" href={`http://localhost:3001/how-to/${status.text || "filtering-tasks"}`} target="_blank">
               Docs updated, see the new GIFs
             </a>
           ) : status.kind === "error" ? (
@@ -161,7 +165,7 @@ export function TweaksPanel() {
               Update failed: {status.text}
             </span>
           ) : (
-            <span className="text-muted-foreground">{dirty ? "Unsaved changes" : "Move things, then press Done"}</span>
+            <span className="text-muted-foreground">{dirty ? "Unsaved changes" : status.text || "Move things, then press Done"}</span>
           )}
           <Button size="sm" disabled={!dirty || status.kind === "busy"} onClick={() => updateDocs(setStatus)}>
             Done

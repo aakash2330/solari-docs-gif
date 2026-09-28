@@ -20,5 +20,5 @@ for (const f of (await readdir(IMG, { recursive: true }).catch(() => [])).filter
 spawnSync("find", [IMG, "-type", "d", "-empty", "-delete"]);
 await rm("out", { recursive: true, force: true });
 console.error("emptied out/");
-await writeFile("app/tweaks.json", '{"search":"left","status":"left","priority":"left"}\n');
+await writeFile("app/tweaks.json", '{"status":"left","add":"right"}\n');
 console.error("reset app/tweaks.json");

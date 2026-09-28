@@ -6,7 +6,7 @@ sidebar_position: 5
 
 New tasks go in from the toolbar and land at the top of the list.
 
-1. Select **Add Task** at the right-hand end of the toolbar.
+1. Select **Add Task** in the toolbar, above the table on the right.
 2. In the dialog, select the **Status** field and choose **In Progress**.
 3. Select the **Priority** field and choose **High**.
 4. Select **Create task**.
