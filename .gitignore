@@ -5,6 +5,8 @@ node_modules
 dist
 # every pipeline run, kept locally as the record; never committed
 out/
+# recorded GIFs are generated, see the README's setup
+docs/static/img/**/*.gif
 *.tgz
 
 # code coverage

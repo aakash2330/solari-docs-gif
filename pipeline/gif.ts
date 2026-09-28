@@ -47,7 +47,7 @@ export function spotlight(
       if (d <= inner) continue;
       const k = 1 - dim * (d >= outer ? 1 : (d - inner) / (outer - inner));
       const i = (y * width + x) * 4;
-      data[i] *= k; data[i + 1] *= k; data[i + 2] *= k;
+      data[i]! *= k; data[i + 1]! *= k; data[i + 2]! *= k;
     }
 }
 
@@ -60,9 +60,9 @@ export function blit(
     for (let x = 0; x < s.width; x++) {
       const px = x0 + x, py = y0 + y;
       if (px < 0 || py < 0 || px >= width || py >= height) continue;
-      const si = (y * s.width + x) * 4, a = s.data[si + 3] / 255;
+      const si = (y * s.width + x) * 4, a = s.data[si + 3]! / 255;
       if (!a) continue;
       const di = (py * width + px) * 4;
-      for (let c = 0; c < 3; c++) data[di + c] = data[di + c] * (1 - a) + s.data[si + c] * a;
+      for (let c = 0; c < 3; c++) data[di + c] = data[di + c]! * (1 - a) + s.data[si + c]! * a;
     }
 }
