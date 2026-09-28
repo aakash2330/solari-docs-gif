@@ -1,10 +1,16 @@
+import { Solari } from "@solarisdk/browser";
 import { chromium, type Page } from "playwright";
 
-export async function openBrowser({ headless = true, cdpUrl = "" } = {}) {
-  const browser = cdpUrl
-    ? await chromium.connectOverCDP(cdpUrl)
-    : await chromium.launch({ headless });
-  const page = await (await browser.newContext()).newPage();
+// Recording runs in Solari's cloud browser. headers carry the sandbox's preview token on every request to the app.
+export async function openBrowser(headers: Record<string, string>) {
+  const solari = new Solari({ apiKey: process.env.SOLARI_API_KEY! });
+  const session = await solari.sessions.create();
+  const release = () => solari.sessions.releaseAndWait(session.id);
+  const browser = await chromium.connectOverCDP(session.cdpEndpoint).catch(async (e) => {
+    await release();
+    throw e;
+  });
+  const page = await (await browser.newContext({ extraHTTPHeaders: headers })).newPage();
   return {
     page,
     navigate: (url: string) => page.goto(url, { waitUntil: "domcontentloaded" }),
@@ -25,7 +31,7 @@ export async function openBrowser({ headless = true, cdpUrl = "" } = {}) {
       await p.close();
       return png;
     },
-    close: () => browser.close(),
+    close: () => browser.close().finally(release),
   };
 }
 

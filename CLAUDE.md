@@ -114,6 +114,19 @@ For more information, read the Bun API docs in `node_modules/bun-types/docs/**.m
 
 Always use the `ponytail` skill for any coding work in this project.
 
+## Solari
+
+Always use the Solari MCP (`mcp__solari__*` tools) to manage Solari: listing, creating, connecting to, and killing sandboxes, desktops and browsers.
+
 ## Verification
 
 Don't do any live verification (running the pipeline, the app, a browser, or any model or API call) unless explicitly told to. Typecheck only; the user tests it themselves.
+
+## Solari credit
+
+Every Solari sandbox, browser session and snapshot costs real money. Testing alone once burned about $4 (28 Sep 2026), from repeated snapshot builds, repeated test runs, a browser session a failed run never closed, and sandboxes left running.
+
+- Ask the user before every Solari action that costs credit: creating a sandbox, opening a browser session, building a snapshot, running `npm run docs-generate` or `npm run docs-update`, or any Solari MCP tool that starts one of those. Say what it starts and roughly for how long. One yes covers one run only.
+- One sandbox at a time, unless the user specifically says otherwise.
+- When a run fails, stop and report. Don't retry on Solari without asking again.
+- Every failure path must kill its sandbox and release its browser session.

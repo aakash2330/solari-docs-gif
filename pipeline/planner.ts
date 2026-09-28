@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { CAPABILITIES } from "./jev";
-import { answer } from "./model";
+import { CAPABILITIES } from "./jev.ts";
+import { answer } from "./model.ts";
 
 const Goals = z.object({
   goals: z.array(

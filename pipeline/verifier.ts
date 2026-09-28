@@ -1,5 +1,6 @@
+import { readFile } from "node:fs/promises";
 import { z } from "zod";
-import { answer } from "./model";
+import { answer } from "./model.ts";
 
 const Verdict = z.object({
   ok: z.boolean().describe("true if the screen shows the end state"),
@@ -12,7 +13,7 @@ export async function verify(goal: string, png: string) {
     {
       role: "user",
       content: [
-        { type: "file", mediaType: "image/png", data: await Bun.file(png).bytes() },
+        { type: "file", mediaType: "image/png", data: await readFile(png) },
         { type: "text", text: `This is the final screen of a recording, a single frame. Does it show this end state? "${goal}"` },
       ],
     },

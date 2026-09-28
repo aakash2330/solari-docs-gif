@@ -1,21 +1,24 @@
+import { spawnSync } from "node:child_process";
+import { readdir, readFile, rm, writeFile } from "node:fs/promises";
+
 const DOCS = "docs/docs";
 const IMG = "docs/static/img";
 
-for await (const f of new Bun.Glob("**/*.md").scan(DOCS)) {
+for (const f of (await readdir(DOCS, { recursive: true })).filter((f) => f.endsWith(".md"))) {
   const path = `${DOCS}/${f}`;
-  const text = await Bun.file(path).text();
-  const clean = text.replace(/\n*!\[[^\]]*\]\([^)]+\.gif\)\n/g, "\n");
+  const text = await readFile(path, "utf8");
+  const clean = text.replace(/\n*!\[[^\]]*\]\([^)]+\.gif\)\n?/g, "\n");
   if (clean !== text) {
-    await Bun.write(path, clean);
+    await writeFile(path, clean);
     console.error(`stripped ${path}`);
   }
 }
-for await (const f of new Bun.Glob("**/*.gif").scan(IMG)) {
-  await Bun.file(`${IMG}/${f}`).delete();
+for (const f of (await readdir(IMG, { recursive: true }).catch(() => [])).filter((f) => f.endsWith(".gif"))) {
+  await rm(`${IMG}/${f}`);
   console.error(`deleted ${IMG}/${f}`);
 }
-await Bun.$`find ${IMG} -type d -empty -delete`.nothrow();
-await Bun.$`rm -rf out`;
+spawnSync("find", [IMG, "-type", "d", "-empty", "-delete"]);
+await rm("out", { recursive: true, force: true });
 console.error("emptied out/");
-await Bun.write("app/tweaks.json", '{"search":"left","status":"left","priority":"left"}\n');
+await writeFile("app/tweaks.json", '{"search":"left","status":"left","priority":"left"}\n');
 console.error("reset app/tweaks.json");

@@ -1,7 +1,8 @@
-import { pipeline } from "./index";
+import { execSync } from "node:child_process";
+import { pipeline } from "./index.ts";
 
 const dir = process.argv[2] ?? "docs/docs/how-to";
-const changed = (await Bun.$`git diff --name-only HEAD; git ls-files --others --exclude-standard`.text())
+const changed = execSync("git diff --name-only HEAD; git ls-files --others --exclude-standard", { encoding: "utf8" })
   .split("\n")
   .filter((f) => f.startsWith(dir + "/") && f.endsWith(".md"))
   .sort();

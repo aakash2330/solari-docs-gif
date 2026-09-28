@@ -1,7 +1,12 @@
+import { spawn } from "node:child_process";
+import { readdir, readFile, writeFile } from "node:fs/promises";
+import { createServer as createHttpServer } from "node:http";
+import { resolve } from "node:path";
+import tailwindcss from "@tailwindcss/vite";
+import express from "express";
+import { createServer } from "vite";
 import { z } from "zod";
-import index from "../app/index.html";
 
-// Tweaks live in a file, not localStorage: the recorder's browser isn't yours.
 const Pos = z.enum(["left", "middle", "right"]);
 const Tweaks = z.object({
   search: Pos,
@@ -9,58 +14,56 @@ const Tweaks = z.object({
   priority: Pos,
 });
 export type Tweaks = z.infer<typeof Tweaks>;
-const FILE = Bun.file(import.meta.dir + "/../app/tweaks.json");
-const ROOT = import.meta.dir + "/..";
+const ROOT = resolve(import.meta.dirname, ".."); // no "..", which sendFile refuses
+const APP = ROOT + "/app";
+const FILE = APP + "/tweaks.json";
 const DOCS = ROOT + "/docs/docs/how-to";
 
-// A tweak rewrites the position phrase after each name in the docs, so git sees the page changed and update.ts re-records it.
 const NAMES: Record<keyof Tweaks, string> = { search: "search box", status: "\\*\\*Status\\*\\*", priority: "\\*\\*Priority\\*\\*" };
 const PHRASE: Record<Tweaks["search"], string> = { left: "on the left", middle: "in the middle", right: "on the right" };
 async function syncDocs(t: Tweaks) {
-  for await (const f of new Bun.Glob("*.md").scan(DOCS)) {
+  for (const f of (await readdir(DOCS)).filter((f) => f.endsWith(".md"))) {
     const path = `${DOCS}/${f}`;
-    const was = await Bun.file(path).text();
+    const was = await readFile(path, "utf8");
     let text = was;
     for (const key of Object.keys(NAMES) as (keyof Tweaks)[])
       text = text.replace(new RegExp(`(${NAMES[key]}[^.\\n]*?)(on the left|in the middle|on the right)`, "g"), `$1${PHRASE[t[key]]}`);
-    if (text !== was) await Bun.write(path, text);
+    if (text !== was) await writeFile(path, text);
   }
 }
 
-// `bun --hot` re-runs this file; keep the server on globalThis and reload() it, or each edit starts a second listener.
-const g = globalThis as typeof globalThis & { app?: ReturnType<typeof Bun.serve>; updating?: boolean };
-const options = {
-  port: 3000,
-  routes: {
-    "/": index,
-    "/api/tweaks": {
-      GET: () => new Response(FILE),
-      POST: async (req: Request) => {
-        const t = Tweaks.parse(await req.json());
-        if (g.updating) return new Response("already updating", { status: 409 });
-        g.updating = true;
-        g.app!.timeout(req, 0); // the pipeline can go quiet for a minute; don't drop the stream
-        await Bun.write(FILE, JSON.stringify(t) + "\n");
-        await syncDocs(t);
-        const proc = Bun.spawn(["bun", "pipeline/update.ts"], {
-          cwd: ROOT,
-          stdout: "ignore",
-          stderr: "pipe",
-          env: { ...process.env, FORCE_COLOR: "0" }, // the panel matches on plain lines
-        });
-        proc.exited.then(() => (g.updating = false));
-        // Exit code on its own last line so the panel can tell a finished run from a crash.
-        const exit = new TransformStream({
-          flush: async (c) => c.enqueue(new TextEncoder().encode(`\nexit ${await proc.exited}\n`)),
-        });
-        return new Response(proc.stderr.pipeThrough(exit), { headers: { "content-type": "text/plain" } });
-      },
-    },
-  },
-  development: { hmr: true },
-};
+const app = express();
+const server = createHttpServer(app);
 
-if (g.app) g.app.reload(options);
-else g.app = Bun.serve(options);
+app.get("/api/tweaks", (_req, res) => res.sendFile(FILE));
 
-console.log(`app on ${g.app.url}`);
+let updating = false;
+app.post("/api/tweaks", express.json({ type: "*/*" }), async (req, res) => {
+  const t = Tweaks.parse(req.body);
+  if (updating) return void res.status(409).send("already updating");
+  updating = true;
+  await writeFile(FILE, JSON.stringify(t) + "\n");
+  await syncDocs(t);
+  const proc = spawn("node", ["--env-file=.env", "pipeline/update.ts"], {
+    cwd: ROOT,
+    stdio: ["ignore", "ignore", "pipe"],
+    env: { ...process.env, FORCE_COLOR: "0" }, // the panel matches on plain lines
+  });
+  res.type("text/plain");
+  proc.stderr.pipe(res, { end: false });
+  proc.on("close", (code) => {
+    updating = false;
+    res.end(`\nexit ${code}\n`);
+  });
+});
+
+const vite = await createServer({
+  root: APP,
+  configFile: false,
+  plugins: [tailwindcss()],
+  resolve: { alias: { "@": APP } },
+  server: { middlewareMode: true, hmr: { server }, allowedHosts: true, warmup: { clientFiles: ["./app.tsx"] } },
+});
+app.use(vite.middlewares);
+
+server.listen(3000, () => console.log("app on http://localhost:3000"));

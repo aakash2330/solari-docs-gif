@@ -1,5 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from "gifenc";
+import gifenc from "gifenc";
 import { PNG } from "pngjs";
+
+const { GIFEncoder, quantize, applyPalette } = gifenc;
 
 export type Frame = { png: Uint8Array; at?: { x: number; y: number } | null };
 

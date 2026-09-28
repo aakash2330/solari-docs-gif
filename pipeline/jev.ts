@@ -1,4 +1,3 @@
-// Requires TYPESAFE_API_KEY and JEV_MODEL in .env (Bun loads it automatically).
 async function evaluate(state: string, questions: Record<string, unknown>) {
   const res = await fetch("https://api.typesafe.ai/v1/systemone", {
     method: "POST",

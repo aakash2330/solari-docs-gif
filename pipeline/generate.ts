@@ -1,7 +1,9 @@
-// Records every page in a directory (default docs/docs/how-to).
+import { readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { pipeline } from "./index";
+import { pipeline } from "./index.ts";
 
-const dir = process.argv[2] ?? "docs/docs/how-to";
-const pages = (await Array.fromAsync(new Bun.Glob("*.md").scan(dir))).sort().map((f) => join(dir, f));
+const arg = process.argv[2] ?? "docs/docs/how-to";
+const pages = arg.endsWith(".md")
+  ? [arg]
+  : (await readdir(arg)).filter((f) => f.endsWith(".md")).sort().map((f) => join(arg, f));
 await pipeline("generate", pages);

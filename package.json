@@ -4,14 +4,15 @@
   "type": "module",
   "workspaces": ["app", "docs", "pipeline"],
   "scripts": {
-    "dev": "bun run --filter '*' dev",
-    "start": "bun run docs-generate",
-    "docs-generate": "bun pipeline/generate.ts",
-    "docs-update": "bun pipeline/update.ts",
-    "clean": "bun pipeline/remove-gifs.ts"
+    "dev": "npm run dev -w pipeline & npm run dev -w docs",
+    "start": "npm run docs-generate",
+    "docs-generate": "node --env-file=.env pipeline/generate.ts",
+    "docs-update": "node --env-file=.env pipeline/update.ts",
+    "snapshot": "node --env-file-if-exists=.env pipeline/snapshot.ts",
+    "clean": "node pipeline/remove-gifs.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest",
+    "@types/node": "^24",
     "typescript": "^5"
   }
 }

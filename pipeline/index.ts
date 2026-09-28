@@ -1,22 +1,26 @@
-import type { FileSink } from "bun";
-import { renameSync } from "node:fs";
+import { appendFileSync, renameSync } from "node:fs";
+import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, relative } from "node:path";
-import { openBrowser } from "./browser";
-import { CURSOR, toGif, type Frame } from "./gif";
-import { MAX_STEPS, nextClick } from "./jev";
-import { plan, replan, type Goal, type Page } from "./planner";
-import { verify } from "./verifier";
+import { openBrowser } from "./browser.ts";
+import { CURSOR, toGif, type Frame } from "./gif.ts";
+import { MAX_STEPS, nextClick } from "./jev.ts";
+import { plan, replan, type Goal, type Page } from "./planner.ts";
+import { killLive, startApp } from "./sandbox.ts";
+import { verify } from "./verifier.ts";
 
 const DOCS = "docs/docs";
 const IMG = "docs/static/img";
-const HEADLESS = true;
+let appUrl = ""; // the sandbox's preview link, set once per run
 // out/<run>/<page>/<section>.gif, kept forever as the record of every run.
 const RUN = `out/${new Date().toISOString().slice(0, 16).replace(/:/g, "-")}`;
-let logFile: FileSink;
 function log(line: string) {
   console.error(line);
-  logFile.write(line + "\n");
-  logFile.flush();
+  appendFileSync(`${RUN}/log.txt`, line + "\n");
+}
+// writeFile, creating the folders on the way.
+async function put(path: string, data: string | Uint8Array) {
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, data);
 }
 
 type Browser = Awaited<ReturnType<typeof openBrowser>>;
@@ -65,14 +69,15 @@ const steps: [string, (run: Run) => Promise<void>][] = [
       for (const g of run.goals!.filter((g) => g.verified).sort((a, b) => b.after_line - a.after_line)) {
         const embed = `![${g.title}](/img/${rel}/${key(run, g)})`;
         // A re-run overwrites the GIF in place; the embed only goes in once.
-        await Bun.write(`${IMG}/${rel}/${key(run, g)}`, Bun.file(g.gif));
+        await mkdir(dirname(`${IMG}/${rel}/${key(run, g)}`), { recursive: true });
+        await copyFile(g.gif, `${IMG}/${rel}/${key(run, g)}`);
         if (lines.includes(embed)) continue;
         // The planner sometimes points mid-paragraph; walk down to the paragraph's last line so the GIF never splits a sentence.
         let at = g.after_line;
         while (lines[at - 1]?.trim() && lines[at]?.trim()) at++;
         lines.splice(at, 0, "", embed);
       }
-      await Bun.write(run.file, lines.join("\n"));
+      await writeFile(run.file, lines.join("\n"));
     },
   ],
   [
@@ -93,7 +98,7 @@ const out = (run: Run, g: Goal) => `${RUN}/${key(run, g)}`;
 
 async function record(run: Run, g: Goal) {
   const b = run.browser;
-  await b.navigate(process.env.APP_URL ?? "http://localhost:3000");
+  await b.navigate(appUrl);
   const frames: Frame[] = [];
   g.trace = [];
   let i = 0;
@@ -110,15 +115,15 @@ async function record(run: Run, g: Goal) {
   g.trace.push(i < MAX_STEPS ? "done" : "hit step cap");
   frames.push({ png: await b.screenshot() });
   g.gif = out(run, g);
-  await Bun.write(g.gif, toGif(frames, run.cursor));
-  await Bun.write(`${g.gif}.png`, frames.at(-1)!.png);
+  await put(g.gif, toGif(frames, run.cursor));
+  await put(`${g.gif}.png`, frames.at(-1)!.png);
 }
 
 async function check(run: Run, g: Goal) {
   // last frame only; add more frames if bad GIFs slip through.
   const png = `${g.gif}.png`;
   const { ok, reason } = await verify(g.goal, png);
-  await Bun.file(png).delete();
+  await rm(png);
   g.verified = ok;
   g.reason = reason;
   log(`  ${g.title}: ${ok ? "yes" : "no"} ${reason}`);
@@ -127,16 +132,24 @@ async function check(run: Run, g: Goal) {
 }
 
 export async function pipeline(mode: "generate" | "update", files: string[]) {
-  await Bun.write(`${RUN}/log.txt`, "");
-  logFile = Bun.file(`${RUN}/log.txt`).writer();
+  await put(`${RUN}/log.txt`, "");
   log(`${mode}: ${files.length} page(s)`);
   for (const f of files) log(`  ${f}`);
-  const browser = await openBrowser({ headless: HEADLESS });
-  const cursor = await browser.rasterize(CURSOR.svg, CURSOR.w, CURSOR.h);
+  let browser: Browser | undefined;
+  for (const sig of ["SIGINT", "SIGTERM"] as const)
+    process.once(sig, async () => {
+      await Promise.allSettled([browser?.close(), killLive()]);
+      process.exit(sig === "SIGINT" ? 130 : 143);
+    });
+  const app = await startApp();
+  appUrl = app.url;
+  log(`app on ${new URL(app.url).origin}`); // the full URL carries an access token
   try {
+    browser = await openBrowser(app.headers);
+    const cursor = await browser.rasterize(CURSOR.svg, CURSOR.w, CURSOR.h);
     for (const file of files) {
       log(`\n# ${file}`);
-      const run: Run = { file, text: await Bun.file(file).text(), browser, cursor };
+      const run: Run = { file, text: await readFile(file, "utf8"), browser, cursor };
       for (const [name, step] of steps) {
         const t = Date.now();
         log(`→ ${name}`);
@@ -145,7 +158,10 @@ export async function pipeline(mode: "generate" | "update", files: string[]) {
       }
     }
   } finally {
-    await browser.close();
-    logFile.end();
+    try {
+      await browser?.close();
+    } finally {
+      await app.kill();
+    }
   }
 }
