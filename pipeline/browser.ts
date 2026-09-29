@@ -30,8 +30,11 @@ export async function openBrowser(headers: Record<string, string>) {
       return png;
     },
     close: async () => {
-      await browser.close();
-      await release();
+      try {
+        await browser.close();
+      } finally {
+        await release(); // even if close throws, or the session bills until it times out
+      }
     },
   };
 }

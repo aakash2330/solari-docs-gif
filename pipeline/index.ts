@@ -148,23 +148,25 @@ export async function pipeline(mode: "generate" | "update", files: string[]) {
   appUrl = app.url;
   log(`app on ${new URL(app.url).origin}`); // the full URL carries an access token
   try {
-    browser = await openBrowser(app.headers);
-    const cursor = await browser.rasterize(CURSOR.svg, CURSOR.w, CURSOR.h);
     for (const file of files) {
       log(`\n# ${file}`);
-      const run: Run = { file, text: await readFile(file, "utf8"), browser, cursor };
-      for (const [name, step] of steps) {
-        const t = Date.now();
-        log(`→ ${name}`);
-        await step(run);
-        log(`  done in ${((Date.now() - t) / 1000).toFixed(1)}s`);
+      // A fresh session per page keeps every session short: a page takes about a minute, and long-lived sessions have been seen to drop.
+      const b = (browser = await openBrowser(app.headers));
+      try {
+        const cursor = await b.rasterize(CURSOR.svg, CURSOR.w, CURSOR.h);
+        const run: Run = { file, text: await readFile(file, "utf8"), browser: b, cursor };
+        for (const [name, step] of steps) {
+          const t = Date.now();
+          log(`→ ${name}`);
+          await step(run);
+          log(`  done in ${((Date.now() - t) / 1000).toFixed(1)}s`);
+        }
+      } finally {
+        await b.close();
+        browser = undefined;
       }
     }
   } finally {
-    try {
-      await browser?.close();
-    } finally {
-      await app.kill();
-    }
+    await app.kill();
   }
 }

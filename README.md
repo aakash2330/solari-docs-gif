@@ -26,8 +26,8 @@ npm run dev                # app on :3000, docs on :3001, to see the GIFs in pla
 | `TYPESAFE_API_KEY` | The click agent, TypeSafe's Jev model | [console.typesafe.ai](https://console.typesafe.ai), Keys. No TypeSafe account? The gateway serves Jev too: in `pipeline/jev.ts` use `https://ai-gateway.vercel.sh/typesafe/v1/systemone`, the gateway key and model `typesafe-ai/jev` |
 
 The pipeline commands check their keys first and exit naming the missing one before
-anything is billed. No GIFs are checked in; the first run makes them, one sandbox and
-one browser session, about a minute per page after a 40-second boot.
+anything is billed. No GIFs are checked in; the first run makes them: one sandbox, a fresh
+browser session per page, about a minute per page after a 40-second boot.
 
 ```bash
 npm run docs-generate -- docs/docs/how-to/add-a-task.md   # one page
@@ -76,8 +76,9 @@ exists to catch: a help page describing something the app no longer does.
   installs, starts the app on port 3000, snapshots it and kills it. Every run after
   that boots from the snapshot in about half a minute and reaches the app through its
   preview URL.
-- The pipeline creates a browser session, connects Playwright over CDP, and sends the
-  sandbox's preview token as a header so the browser is let in.
+- For each page the pipeline creates a browser session, connects Playwright over CDP,
+  sends the sandbox's preview token as a header so the browser is let in, and releases
+  the session when the page is done. No session lives longer than one page takes.
 - Both are released in a `finally`, failed runs and Ctrl-C included.
 
 Two SDK details worth knowing: a sandbox from `create()` runs commands straight away,
