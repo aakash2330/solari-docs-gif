@@ -100,9 +100,10 @@ changing those two things and the docs folder.
 
 ## Cost
 
-A full five-page run on 28 Sep 2026 took 5 min 29 s: about 2.5 cents of Solari at list
-price and 0.8 cents of AI Gateway across 10 calls. TypeSafe's 20 clicks are not metered
-here. `pipeline/model.ts` sets the model and the 12-second spacing that keeps a
-free-tier gateway key under its rate limit.
+A full five-page run on 30 Sep 2026 took 3 min 52 s with one page retried: about four
+sandbox minutes, five browser sessions of under a minute each, 12 AI Gateway calls and
+13 TypeSafe clicks. At list price that is a few cents of Solari and about a cent of AI
+Gateway; TypeSafe is not metered here. `pipeline/model.ts` sets the model and the
+12-second spacing that keeps a free-tier gateway key under its rate limit.
 
 Built with Claude Code.
