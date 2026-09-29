@@ -52,12 +52,12 @@ npm run clean             # strip embeds, delete GIFs and out/, reset the Tweak 
 
 ## Try it: move a control, watch the docs follow
 
-Open **Tweak the UI**, bottom right of the app on :3000. Move the Status filter or the
-Add Task button to the left, middle or right of the toolbar and press **Done**. That
-saves the layout, rewrites the sentence in the docs that says where the control is, and
-runs `npm run docs-update`, which re-records only the pages git sees as changed. The
-panel shows each stage, then links to the re-recorded page. If the move changes no
-sentence, it says so.
+Open **Tweak the UI**, bottom right of the app on :3000. Move the Status filter to the
+left, middle or right of the toolbar and press **Done**. That saves the layout, rewrites
+the sentence in the docs that says where the filter is, and runs `npm run docs-update`,
+which re-records only the pages git sees as changed. The panel shows each stage, then
+links to the re-recorded page. Its second row moves the Add Task button, which no page
+mentions, so moving only that makes Done report that nothing needed re-recording.
 
 The docs are the source of truth. `app/tweaks.json` only remembers the layout, and it
 is copied into the sandbox at the start of every run, so a moved control shows up in
@@ -90,9 +90,8 @@ listing lags a few seconds behind a build.
 - `pipeline/` — `index.ts` runs the steps. `planner.ts`, `jev.ts` and `verifier.ts` are
   the three model calls. `sandbox.ts` and `browser.ts` are the Solari side. `gif.ts`
   stitches frames. `serve.ts` serves the app and the Tweak panel's endpoint.
-- `app/` — the demo app the GIFs are recorded against: a task list on TanStack Table,
-  chosen because faceted filters, a column menu and a nested row menu are awkward to
-  drive.
+- `app/` — the demo app the GIFs are recorded against: a task list on TanStack Table
+  with faceted filters, sortable and hideable columns, and row selection.
 - `docs/` — the Docusaurus site whose pages get rewritten.
 
 The planner, agent and checker know nothing about the demo app. The snapshot script
