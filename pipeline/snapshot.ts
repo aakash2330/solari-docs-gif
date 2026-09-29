@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import type { Sandbox } from "@solarisdk/sandbox";
 import { client, DIR, ROOT, sh, waitForApp } from "./sandbox.ts";
 
-const FILES = ["package.json", "package-lock.json", "tsconfig.json", "docs/package.json", "pipeline/package.json", "pipeline/serve.ts", "app"];
+const FILES = ["package.json", "tsconfig.json", "docs/package.json", "pipeline/package.json", "pipeline/serve.ts", "app"];
 
 async function upload(sbx: Sandbox) {
   const tar = ["-czf", "-", "--format", "ustar", "--exclude", "node_modules", "-C", ROOT, ...FILES];
@@ -26,8 +26,8 @@ try {
   const node = `node-${process.version}-linux-x64`;
   await sh(sbx, `curl -fsSL https://nodejs.org/dist/${process.version}/${node}.tar.gz | tar -xz -C /usr/local --strip-components=1`);
   await upload(sbx);
-  // Skips docs/: the sandbox never serves the docs site.
-  await sh(sbx, "npm ci -w app -w pipeline", DIR);
+  // Skips docs/: the sandbox never serves the docs site. No lockfile: the cookbook ignores them, so install, not ci.
+  await sh(sbx, "npm install -w app -w pipeline", DIR);
   // setsid + nohup so the server outlives this one-shot command.
   await sh(sbx, "setsid nohup node serve.ts > /tmp/app.log 2>&1 < /dev/null &", `${DIR}/pipeline`);
   await waitForApp(sbx).catch(async (e) => {

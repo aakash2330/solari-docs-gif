@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "npm run dev -w pipeline & npm run dev -w docs",
     "start": "npm run docs-generate",
-    "docs-generate": "node --env-file=.env pipeline/generate.ts",
-    "docs-update": "node --env-file=.env pipeline/update.ts",
+    "docs-generate": "node --env-file-if-exists=.env pipeline/generate.ts",
+    "docs-update": "node --env-file-if-exists=.env pipeline/update.ts",
     "snapshot": "node --env-file-if-exists=.env pipeline/snapshot.ts",
     "clean": "node pipeline/remove-gifs.ts"
   },

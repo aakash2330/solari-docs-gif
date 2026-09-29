@@ -7,6 +7,7 @@ let last = 0;
 export async function answer<T extends z.ZodType>(schema: T, prompt: string | ModelMessage[]): Promise<z.infer<T>> {
   await sleep(Math.max(0, last + 12_000 - Date.now()));
   last = Date.now();
+  // No provider object on purpose: "vendor/model" goes through Vercel's AI Gateway, and the ai package reads AI_GATEWAY_API_KEY itself.
   const { staticToolCalls, toolCalls } = await generateText({
     model: "openai/gpt-4.1-mini",
     tools: { answer: tool({ inputSchema: schema }) },

@@ -20,7 +20,6 @@ export async function openBrowser(headers: Record<string, string>) {
       const b = await ref2loc(page, ref).boundingBox();
       return b && { x: b.x + b.width / 2, y: b.y + b.height / 2 };
     },
-    type: (ref: string, text: string) => ref2loc(page, ref).fill(text),
     screenshot: () => page.screenshot(),
     rasterize: async (svg: string, width: number, height: number) => {
       const p = await page.context().newPage();

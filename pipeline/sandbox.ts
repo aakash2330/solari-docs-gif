@@ -3,6 +3,15 @@ import { resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { SandboxClient, type Sandbox } from "@solarisdk/sandbox";
 
+// Fail before anything billable starts. .env.example says where each key comes from.
+export function need(...keys: string[]) {
+  for (const k of keys)
+    if (!process.env[k]) {
+      console.error(`error: ${k} is not set. Copy .env.example to .env and fill it in.`);
+      process.exit(1);
+    }
+}
+need("SOLARI_API_KEY");
 export const client = new SandboxClient({ apiKey: process.env.SOLARI_API_KEY!, baseUrl: "https://api.getsolari.com" });
 export const ROOT = resolve(import.meta.dirname, "..");
 // Guest commands run with no $HOME set, so paths are absolute.

@@ -2,7 +2,7 @@ async function evaluate(state: string, questions: Record<string, unknown>) {
   const res = await fetch("https://api.typesafe.ai/v1/systemone", {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.TYPESAFE_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: process.env.JEV_MODEL, state, questions }),
+    body: JSON.stringify({ model: "jev-latest", state, questions }),
   });
   if (!res.ok) throw new Error(`TypeSafe ${res.status}: ${await res.text()}`);
   return (await res.json()) as { answers: Record<string, any> };
@@ -38,27 +38,4 @@ export async function nextClick(goal: string, tree: string, history: string[] = 
   );
   const ref: string = answers.next.choice;
   return { ref, label: choices[ref] ?? ref };
-}
-
-if (import.meta.main) {
-  const result = await evaluate(
-    "The GIF renders correctly but the accessibility tree ref is stale after navigation.",
-    {
-      isBug: {
-        type: "noul",
-        instructions: "Does this describe a real bug that needs fixing?",
-      },
-      severity: {
-        type: "choice",
-        instructions: "How severe is this issue?",
-        criteria: {
-          low: "Cosmetic or rare edge case",
-          medium: "Affects some runs but has a workaround",
-          high: "Breaks the core flow",
-        },
-      },
-    },
-  );
-
-  console.log(JSON.stringify(result.answers, null, 2));
 }

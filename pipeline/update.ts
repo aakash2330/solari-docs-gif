@@ -2,7 +2,8 @@ import { execSync } from "node:child_process";
 import { pipeline } from "./index.ts";
 
 const dir = process.argv[2] ?? "docs/docs/how-to";
-const changed = execSync("git diff --name-only HEAD; git ls-files --others --exclude-standard", { encoding: "utf8" })
+// --relative: paths from this folder rather than the git root, so this works as a subfolder of a bigger repo.
+const changed = execSync("git diff --name-only --relative HEAD; git ls-files --others --exclude-standard", { encoding: "utf8" })
   .split("\n")
   .filter((f) => f.startsWith(dir + "/") && f.endsWith(".md"))
   .sort();

@@ -43,7 +43,7 @@ app.post("/api/tweaks", express.json({ type: "*/*" }), async (req, res) => {
   updating = true;
   await writeFile(FILE, JSON.stringify(t) + "\n");
   await syncDocs(t);
-  const proc = spawn("node", ["--env-file=.env", "pipeline/update.ts"], {
+  const proc = spawn("node", ["--env-file-if-exists=.env", "pipeline/update.ts"], {
     cwd: ROOT,
     stdio: ["ignore", "ignore", "pipe"],
     env: { ...process.env, FORCE_COLOR: "0" }, // the panel matches on plain lines

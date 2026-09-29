@@ -6,7 +6,6 @@
     "dev": "node serve.ts"
   },
   "dependencies": {
-    "@ai-sdk/gateway": "^4.0.87",
     "@solarisdk/browser": "^0.1.5",
     "@solarisdk/sandbox": "^0.1.4",
     "@tailwindcss/vite": "^4.3.3",

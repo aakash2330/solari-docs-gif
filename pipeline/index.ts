@@ -5,13 +5,13 @@ import { openBrowser } from "./browser.ts";
 import { CURSOR, toGif, type Frame } from "./gif.ts";
 import { MAX_STEPS, nextClick } from "./jev.ts";
 import { plan, replan, type Goal, type Page } from "./planner.ts";
-import { killLive, startApp } from "./sandbox.ts";
+import { killLive, need, startApp } from "./sandbox.ts";
 import { verify } from "./verifier.ts";
 
 const DOCS = "docs/docs";
 const IMG = "docs/static/img";
 let appUrl = ""; // the sandbox's preview link, set once per run
-// out/<run>/<page>/<section>.gif, kept forever as the record of every run.
+// out/<run>/<page>/<section>.gif, the record of every run. Only `npm run clean` empties it.
 const RUN = `out/${new Date().toISOString().slice(0, 16).replace(/:/g, "-")}`;
 function log(line: string) {
   console.error(line);
@@ -102,7 +102,7 @@ async function record(run: Run, g: Goal) {
   const frames: Frame[] = [];
   g.trace = [];
   let i = 0;
-  // click-only loop, add type() when a goal needs text input
+  // click-only loop; add a fill step here when a goal needs text input
   for (; i < MAX_STEPS; i++) {
     const { ref, label } = await nextClick(g.instruction || g.goal, await b.tree(), g.trace);
     log(`  ${g.title}: ${label}`);
@@ -134,6 +134,7 @@ async function check(run: Run, g: Goal) {
 }
 
 export async function pipeline(mode: "generate" | "update", files: string[]) {
+  need("AI_GATEWAY_API_KEY", "TYPESAFE_API_KEY"); // before a sandbox or browser is billed
   await put(`${RUN}/log.txt`, "");
   log(`${mode}: ${files.length} page(s)`);
   for (const f of files) log(`  ${f}`);

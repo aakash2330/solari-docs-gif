@@ -1,41 +1,9 @@
-# dependencies (bun install)
 node_modules
-
-# output
-dist
-# every pipeline run, kept locally as the record; never committed
-out/
-# recorded GIFs are generated, see the README's setup
-docs/static/img/**/*.gif
-*.tgz
-
-# code coverage
-coverage
-*.lcov
-
-# logs
-logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
-
-# dotenv environment variable files
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
-# caches
-.eslintcache
-.cache
-*.tsbuildinfo
-
-# IntelliJ based IDEs
-.idea
-
-# Finder (MacOS) folder config
-.DS_Store
-
+# every run's frames, GIFs and log
+out/
+# recorded GIFs; the first run makes them
+docs/static/img/**/*.gif
 # docusaurus
-.docusaurus
+docs/.docusaurus
 docs/build
