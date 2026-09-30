@@ -6,6 +6,13 @@ Pages whose steps no longer work on the real app get flagged instead of illustra
 The app runs in a Solari sandbox, a Solari browser clicks through it, and a checker
 compares the screen before and after against the page's own words.
 
+
+
+
+https://github.com/user-attachments/assets/ee4bc43c-6bd8-49cf-9245-ec1584e68ea9
+
+
+
 ## Run
 
 Node 24, npm, and three keys.
